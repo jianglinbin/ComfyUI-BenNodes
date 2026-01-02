@@ -53,3 +53,6 @@ Thumbs.db
 # Reports (optional, remove if you want to commit them)
 category_report.md
 dependency_report.md
+
+# Kiro specs (development documents)
+.kiro/
