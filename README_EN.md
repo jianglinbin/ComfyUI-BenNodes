@@ -781,4 +781,4 @@ Thanks to the ComfyUI community for their support and contributions!
 
 ---
 
-**Last Updated**: 2026
+**Last Updated**: 2026/1/2
