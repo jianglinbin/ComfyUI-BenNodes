@@ -55,4 +55,6 @@ category_report.md
 dependency_report.md
 
 # Kiro specs (development documents)
-.kiro/specs/dynamic-input-bypasser/
+.kiro/
+# Local scripts with tokens (for personal use only)
+sync_and_push_local.bat
