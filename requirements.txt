@@ -1,0 +1,26 @@
+# GLM大模型API依赖
+zhipuai
+
+# 图像处理依赖
+Pillow
+
+# 科学计算依赖（用于图像羽化效果）
+scipy
+
+# PDF处理依赖
+PyMuPDF
+
+# 视频处理依赖
+opencv-python
+
+# Office文档处理依赖
+python-docx
+openpyxl
+python-pptx
+
+# 旧版Office文档处理依赖
+xlrd
+pywin32
+
+# 系统资源监控依赖
+psutil
