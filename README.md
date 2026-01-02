@@ -2,6 +2,8 @@
 
 ComfyUI 自定义节点集合，提供图像处理、文本处理、数据转换、AI 分析等功能。
 
+中文 | [English](README_EN.md)
+
 ## 📦 安装
 
 ### 方法 1：通过 ComfyUI Manager 安装（推荐）
