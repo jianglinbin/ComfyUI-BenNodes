@@ -6,7 +6,7 @@
         "https://github.com/jianglinbin/ComfyUI-BenNodes"
     ],
     "install_type": "git-clone",
-    "description": "ComfyUI 自定义节点集合，提供 21 个实用节点：图像处理（缩放、加载）、文本处理（拆分、连接、保存）、数据转换（JSON解析、类型转换、列表选择器）、AI 分析（GLM多模态）、系统工具（内存清理、非空切换、忽略节点）等功能。",
+    "description": "A collection of 21 practical custom nodes for ComfyUI: Image Processing (scaling, loading), Text Processing (split, join, save), Data Conversion (JSON parser, type converter, list selector), AI Analysis (GLM multimodal), System Utilities (memory cleanup, switch NOT NULL, dynamic input bypasser), and more. | ComfyUI 自定义节点集合，提供 21 个实用节点：图像处理（缩放、加载）、文本处理（拆分、连接、保存）、数据转换（JSON解析、类型转换、列表选择器）、AI 分析（GLM多模态）、系统工具（内存清理、非空切换、忽略节点）等功能。",
     "nodename_pattern": "Ben$",
     "pip": ["zhipuai", "python-docx", "openpyxl", "PyPDF2", "scipy", "psutil"]
 }
