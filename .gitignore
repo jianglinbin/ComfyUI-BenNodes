@@ -58,3 +58,4 @@ dependency_report.md
 .kiro/
 # Local scripts with tokens (for personal use only)
 sync_and_push_local.bat
+.gitignore

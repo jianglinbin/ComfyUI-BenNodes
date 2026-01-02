@@ -25,7 +25,7 @@ from .nodes.file.FileUploader import FileUploaderBen
 
 from .nodes.system.MemoryCleanupDynamic import MemoryCleanupDynamicBen
 from .nodes.system.SwitchNOTNULL import SwitchNOTNULL
-from .nodes.dynamic_input_bypasser import DynamicInputBypasser
+from .nodes.system.DynamicInputBypasser import DynamicInputBypasser
 
 # 节点类映射
 NODE_CLASS_MAPPINGS = {
