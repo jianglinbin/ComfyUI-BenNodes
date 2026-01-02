@@ -1,0 +1,12 @@
+{
+    "author": "jianglinbin",
+    "title": "ComfyUI-BenNodes",
+    "reference": "https://github.com/jianglinbin/ComfyUI-BenNodes",
+    "files": [
+        "https://github.com/jianglinbin/ComfyUI-BenNodes"
+    ],
+    "install_type": "git-clone",
+    "description": "ComfyUI 自定义节点集合，提供 21 个实用节点：图像处理（缩放、加载）、文本处理（拆分、连接、保存）、数据转换（JSON解析、类型转换、列表选择器）、AI 分析（GLM多模态）、系统工具（内存清理、非空切换、忽略节点）等功能。",
+    "nodename_pattern": "Ben$",
+    "pip": ["zhipuai", "python-docx", "openpyxl", "PyPDF2", "scipy", "psutil"]
+}

@@ -16,7 +16,7 @@ ComfyUI 自定义节点集合，提供图像处理、文本处理、数据转换
 
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/w313185710/ComfyUI-BenNodes.git
+git clone https://github.com/jianglinbin/ComfyUI-BenNodes.git
 cd ComfyUI-BenNodes
 pip install -r requirements.txt
 ```
@@ -770,8 +770,8 @@ MIT License
 
 ## 📮 联系方式
 
-- GitHub: [w313185710/ComfyUI-BenNodes](https://github.com/w313185710/ComfyUI-BenNodes)
-- Issues: [提交问题](https://github.com/w313185710/ComfyUI-BenNodes/issues)
+- GitHub: [jianglinbin/ComfyUI-BenNodes](https://github.com/jianglinbin/ComfyUI-BenNodes)
+- Issues: [提交问题](https://github.com/jianglinbin/ComfyUI-BenNodes/issues)
 
 ---
 
