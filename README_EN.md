@@ -1,8 +1,17 @@
 # ComfyUI-BenNodes
 
-A collection of custom nodes for ComfyUI, providing image processing, text processing, data conversion, AI analysis, and more.
+A collection of 25 practical custom nodes for ComfyUI, covering image processing, text processing, data conversion, AI analysis, system utilities, and workflow control.
 
-[中文文档](README.md) | English
+[中文](README.md) | English
+
+## ✨ Features
+
+- 🖼️ **Image Processing**: Smart scaling, batch loading, multiple alignment modes
+- 📝 **Text Processing**: Split, join, save, multi-line processing
+- 📊 **Data Conversion**: JSON parser, type converter, list selector
+- 🤖 **AI Analysis**: GLM multimodal analysis for images, videos, PDFs, Office documents
+- 🔧 **System Utilities**: Memory cleanup, non-null switch, file selector
+- 🎮 **Workflow Control**: Node bypasser, group bypasser, parameter distributor
 
 ## 📦 Installation
 
@@ -21,200 +30,207 @@ cd ComfyUI-BenNodes
 pip install -r requirements.txt
 ```
 
-### Dependencies
+## 📚 Node List
 
-#### Core Dependencies (Required)
+### 🤖 AI Related (2 nodes)
+- **GLM Config** - Configure GLM model parameters
+- **GLM Multimodal Analysis** - Analyze images, videos, PDFs, Office documents
+
+### 📊 Data Processing (5 nodes)
+- **Resolution Selector** - Preset resolution and aspect ratio selection
+- **List Index Selector** - Select elements by index from list
+- **Advanced List Index Selector** - Support start, step, length control
+- **JSON Parser** - Parse JSON with path extraction
+- **Type Converter** - Convert between any types
+
+### 📁 File Operations (1 node)
+- **File Uploader** - Select files from file system
+
+### 🖼️ Image Processing (4 nodes)
+- **Image Loader** - Load single image
+- **Image Batch Loader** - Batch load images from folder
+- **Image Scaler** - Scale, crop, pad images
+- **Empty Latent Image** - Create empty latent image
+
+### 🔧 System Utilities (1 node)
+- **Memory Cleanup** - Clean VRAM and RAM
+
+### 📝 Text Processing (5 nodes)
+- **Prompt Line Processor** - Process multi-line prompts
+- **Text Saver** - Save text to file
+- **Text Splitter** - Split text by delimiter
+- **Text Joiner** - Join text or lists
+- **Text Processor** - Remove empty lines, whitespace
+
+### 🎮 Workflow Control (7 nodes)
+- **Non-Null Switch** - Return first non-null value
+- **Node Bypasser** - Control multiple nodes execution
+- **Advanced Node Bypasser** - JSON rule-based conditional activation
+- **Group Bypasser** - Control group execution
+- **Advanced Group Bypasser** - JSON rule-based group control
+- **Parameter Distributor** - Dynamic parameter distribution
+
+---
+
+## 🔧 Dependencies
+
+### Core Dependencies (Required)
 ```bash
-pip install zhipuai Pillow psutil
+pip install Pillow psutil
 ```
 
-#### Enhanced Features (Recommended)
+### AI Features (Required for GLM nodes)
+```bash
+pip install zhipuai
+```
+
+### Image Enhancement (Recommended, for feathering)
 ```bash
 pip install scipy
 ```
 
-#### Office Document Processing (Optional)
+### Office Document Processing (Optional)
 ```bash
 pip install python-docx openpyxl python-pptx xlrd
 ```
 
-#### Windows Specific (Optional, Windows only)
+### Windows Specific (Optional, Windows only)
 ```bash
 pip install pywin32
 ```
 
-#### PDF and Video Processing (Optional)
+### PDF and Video Processing (Optional)
 ```bash
 pip install PyMuPDF opencv-python
 ```
 
-## 📚 Node Categories
-
-- [AI](#ai) (2 nodes)
-- [Data Processing](#data-processing) (5 nodes)
-- [File Operations](#file-operations) (1 node)
-- [Image Processing](#image-processing) (4 nodes)
-- [System Utilities](#system-utilities) (3 nodes)
-- [Text Processing](#text-processing) (5 nodes)
-- [Control Flow](#control-flow) (1 node)
-
 ---
 
-## 🤖 AI
+## 📖 Detailed Documentation
 
-### GLM Config Node 🧠-Ben
+
+### 🤖 AI Related
+
+#### GLM Config 🧠-Ben
 
 **Category**: `BenNodes/AI`
 
 Configure GLM model parameters including model selection, temperature, token limits, etc.
 
-#### Input Parameters
+**Input Parameters**:
+- `vision_model` (STRING): Vision model name, default "glm-4.6v-flash"
+- `text_model` (STRING): Text model name, default "glm-4.5-flash"
+- `max_pages` (INT): Max pages for PDF processing, 0 means unlimited
+- `max_tokens` (INT): Max tokens for model generation, default 8192
+- `temperature` (FLOAT): Control output randomness, recommended 0.1-0.3
+- `top_p` (FLOAT): Limit candidate word range, recommended 0.5-0.7
+- `chunk_mode` (COMBO): Large file processing mode (auto/manual)
+- `thinking_enabled` (BOOLEAN): Enable thinking feature
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| vision_model | STRING | glm-4.6v-flash | Vision model name |
-| text_model | STRING | glm-4.5-flash | Text model name |
-| max_pages | INT | 0 | Max PDF pages, 0 = unlimited |
-| max_tokens | INT | 8192 | Max tokens for generation |
-| temperature | FLOAT | 0.3 | Output randomness, 0.1-0.3 recommended |
-| top_p | FLOAT | 0.7 | Candidate word range, 0.5-0.7 recommended |
-| chunk_mode | COMBO | auto | Large file processing mode |
-| thinking_enabled | BOOLEAN | True | Enable thinking feature |
+**Output**:
+- `glm_config`: GLM configuration object
 
-#### Output
-
-- **glm_config**: GLM configuration object
-
-#### Usage Example
-
+**Example**:
 ```
-[GLM Config Node] → [GLM Multimodal Analysis]
+[GLM Config] → [GLM Multimodal Analysis]
 ```
 
 ---
 
-### GLM Multimodal Analysis 🧠-Ben
+#### GLM Multimodal Analysis 🧠-Ben
 
 **Category**: `BenNodes/AI`
 
-Analyze images, videos, PDFs, Office documents, or text files using GLM models.
+Analyze images, videos, PDFs, Office documents, or text files using GLM model, with support for large file chunking.
 
-#### Input Parameters
+**Input Parameters**:
+- `prompt` (STRING): Analysis prompt
+- `system_prompt` (STRING): System prompt to define model role
+- `input` (ANY): Supports ComfyUI image/video data types or file path string
+- `glm_config` (GLM_CONFIG): GLM configuration (optional)
+- `api_key` (STRING): GLM API key
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| prompt | STRING | Analysis prompt |
-| system_prompt | STRING | System prompt defining model role |
-| input | ANY | Supports images, videos, file paths |
-| glm_config | GLM_CONFIG | GLM configuration (optional) |
-| api_key | STRING | GLM API key |
+**Output**:
+- `Analysis Result` (STRING LIST): Analysis result list
 
-#### Output
+**Supported File Types**:
+- Images: .jpg, .jpeg, .png, .bmp, .gif, .webp
+- Videos: .mp4, .avi, .mov, .webm, .mkv
+- PDF: .pdf
+- Word: .docx, .doc
+- Excel: .xlsx, .xls
+- PowerPoint: .pptx, .ppt
+- Text: .txt, .md, .json, .xml, .csv, .log, .py, .js, .html, .css
 
-- **Analysis Result**: STRING (list)
-
-#### Supported File Types
-
-- **Images**: .jpg, .jpeg, .png, .bmp, .gif, .webp
-- **Videos**: .mp4, .avi, .mov, .webm, .mkv
-- **PDF**: .pdf
-- **Word**: .docx, .doc
-- **Excel**: .xlsx, .xls
-- **PowerPoint**: .pptx, .ppt
-- **Text**: .txt, .md, .json, .xml, .csv, .log, .py, .js, .html, .css
-
-#### Usage Example
-
+**Example**:
 ```
-[Load Image] → [GLM Multimodal Analysis] → [Save Text]
-                ↑
-         [GLM Config Node]
+[Image Loader] → [GLM Multimodal Analysis] → [Text Saver]
+                        ↑
+                  [GLM Config]
 ```
 
 ---
 
-## 📊 Data Processing
+### 📊 Data Processing
 
-### Resolution Selector 📐-Ben
+#### Resolution Selector 📐-Ben
 
 **Category**: `BenNodes/Data`
 
 Provides preset resolutions and aspect ratios, automatically calculates output width and height.
 
-#### Input Parameters
+**Input Parameters**:
+- `resolution` (COMBO): Preset resolution (480p/720p/1080p/2K/4K/8K/Custom)
+- `aspect_ratio` (COMBO): Aspect ratio (16:9/4:3/1:1/21:9/9:16/3:4/Custom)
+- `width` (INT): Custom width, default 1280
+- `height` (INT): Custom height, default 720
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| resolution | COMBO | 720p | Preset resolution |
-| aspect_ratio | COMBO | 16:9 | Aspect ratio |
-| width | INT | 1280 | Custom width |
-| height | INT | 720 | Custom height |
-
-#### Output
-
-- **width**: INT - Calculated width
-- **height**: INT - Calculated height
-- **resolution_text**: STRING - Resolution description
-
-#### Preset Resolutions
-
-- 480p, 720p, 1080p, 2K, 4K, 8K, Custom
-
-#### Preset Ratios
-
-- 16:9, 4:3, 1:1, 21:9, 9:16, 3:4, Custom
+**Output**:
+- `width` (INT): Calculated width
+- `height` (INT): Calculated height
+- `resolution_text` (STRING): Resolution description
 
 ---
 
-### List Index Selector 📌-Ben
+#### List Index Selector 📌-Ben
 
 **Category**: `BenNodes/Data`
 
-Select elements from a list by index, supports batch image processing.
+Select elements by index from list, supports batch image processing.
 
-#### Input Parameters
+**Input Parameters**:
+- `*` (ANY): Input list
+- `index` (STRING): Index, supports comma-separated values like "0,2,4"
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| * | ANY | - | Input list |
-| index | STRING | 0 | Index, supports comma-separated values |
+**Output**:
+- `ITEM_0 ~ ITEM_19`: Up to 20 outputs
 
-#### Output
-
-- **ITEM_0 ~ ITEM_19**: Up to 20 outputs
-
-#### Usage Example
-
+**Example**:
 ```
-[Load Image Batch] → [List Index Selector] → [Save Image]
-                      index: "0,2,4"
+[Image Batch Loader] → [List Index Selector] → [Save Image]
+                        index: "0,2,4"
 ```
 
 ---
 
-### Advanced List Index Selector 🎯-Ben
+#### Advanced List Index Selector 🎯-Ben
 
 **Category**: `BenNodes/Data`
 
 Advanced list index selection with start position, step, and length control.
 
-#### Input Parameters
+**Input Parameters**:
+- `list` (ANY): Input list
+- `start_index` (INT): Start index, default 0
+- `step` (INT): Step value, 0 means no step
+- `length` (INT): Number of elements to select, default 1
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| list | ANY | - | Input list |
-| start_index | INT | 0 | Starting index |
-| step | INT | 0 | Step value, 0 = no step |
-| length | INT | 1 | Number of elements to select |
+**Output**:
+- `SELECTED_LIST`: Selected element list
 
-#### Output
-
-- **SELECTED_LIST**: Selected element list
-
-#### Usage Example
-
+**Example**:
 ```
-# Start from 5th, take every 2nd, get 3 elements
+# Start from 5th, take every 2nd, total 3 elements
 start_index: 5
 step: 2
 length: 3
@@ -223,35 +239,29 @@ Result: [5, 7, 9]
 
 ---
 
-### JSON Parser 📋-Ben
+#### JSON Parser 📋-Ben
 
 **Category**: `BenNodes/Data`
 
-Parse JSON strings with path extraction support.
+Parse JSON string with path extraction support.
 
-#### Input Parameters
+**Input Parameters**:
+- `json_string` (STRING): JSON string
+- `json_path` (STRING): Path expression, supports multiple paths (semicolon-separated)
+- `output_type` (COMBO): Output data type
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| json_string | STRING | JSON string |
-| json_path | STRING | Path expression, supports multiple paths (semicolon-separated) |
-| output_type | COMBO | Output data type |
+**Output**:
+- `JSON_TEXT` (STRING): Formatted JSON text
+- `PARSED_RESULT` (ANY): Parsed result
 
-#### Output
-
-- **JSON_TEXT**: STRING - Formatted JSON text
-- **PARSED_RESULT**: ANY - Parsed result
-
-#### Path Syntax
-
+**Path Syntax**:
 - Simple property: `name`
 - Nested property: `user.name`
 - Array index: `items[0].name`
 - Combined path: `data.users[1].address.city`
 - Multiple paths: `name;age;address.city`
 
-#### Usage Example
-
+**Example**:
 ```json
 {
   "user": {
@@ -260,33 +270,27 @@ Parse JSON strings with path extraction support.
   }
 }
 ```
-
 Path: `user.name` → Output: "John"
 
 ---
 
-### Type Converter 🔄-Ben
+#### Type Converter 🔄-Ben
 
 **Category**: `BenNodes/Data`
 
 Convert any type of input to specified data type.
 
-#### Input Parameters
+**Input Parameters**:
+- `*` (ANY): Input data
+- `target_type` (COMBO): Target type
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| * | ANY | Input data |
-| target_type | COMBO | Target type |
-
-#### Supported Types
-
+**Supported Types**:
 - STRING, LIST<STRING>
 - INT, LIST<INT>
 - FLOAT, LIST<FLOAT>
 - BOOLEAN, LIST<BOOLEAN>
 
-#### Conversion Rules
-
+**Conversion Rules**:
 - Single → Single: Direct conversion
 - Single → List: Convert and wrap in list
 - List → Single: Convert first element
@@ -294,426 +298,501 @@ Convert any type of input to specified data type.
 
 ---
 
-## 📁 File Operations
+### 📁 File Operations
 
-### File Uploader 📂-Ben
+#### File Uploader 📂-Ben
 
 **Category**: `BenNodes/File`
 
-Select files from filesystem, supports images, videos, documents, and more.
+Select files from file system, supports images, videos, documents, etc.
 
-#### Input Parameters
+**Input Parameters**:
+- `file_path` (STRING): File path selector
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| file_path | STRING | File path selector |
-
-#### Output
-
-- **file_path**: STRING - Full file path
-- **file_name**: STRING - File name
-- **file_extension**: STRING - File extension
+**Output**:
+- `file_path` (STRING): Full file path
+- `file_name` (STRING): File name
+- `file_extension` (STRING): File extension
 
 ---
 
-## 🖼️ Image Processing
 
-### Load Image 🖼️-Ben
+### 🖼️ Image Processing
+
+#### Image Loader 🖼️-Ben
 
 **Category**: `BenNodes/Image`
 
-Load a single image with support for various formats and resize modes.
+Load single image with support for multiple formats and scaling modes.
 
-#### Input Parameters
+**Input Parameters**:
+- `image` (COMBO): Image file selection
+- `resize_mode` (COMBO): Scaling mode (none/fit/fill/stretch/pad)
+- `position` (COMBO): Alignment position (center/top/bottom/left/right, etc.)
+- `resolution` (COMBO): Target resolution
+- `aspect_ratio` (COMBO): Target aspect ratio
+- `width` (INT): Target width, default 1080
+- `height` (INT): Target height, default 720
+- `feathering` (INT): Feathering amount, default 0
+- `upscale_method` (COMBO): Scaling algorithm (nearest/bilinear/bicubic/lanczos)
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| image | COMBO | - | Image file selection |
-| resize_mode | COMBO | none | Resize mode |
-| position | COMBO | center | Alignment position |
-| resolution | COMBO | 720p | Target resolution |
-| aspect_ratio | COMBO | 16:9 | Target ratio |
-| width | INT | 1080 | Target width |
-| height | INT | 720 | Target height |
-| feathering | INT | 0 | Feathering amount |
-| upscale_method | COMBO | bicubic | Scaling algorithm |
+**Output**:
+- `Image` (IMAGE): Processed image
+- `Mask` (MASK): Mask
+- `Width` (INT): Image width
+- `Height` (INT): Image height
+- `Filename` (STRING): File name
 
-#### Output
-
-- **Image**: IMAGE
-- **Mask**: MASK
-- **Width**: INT
-- **Height**: INT
-- **Filename**: STRING
-
-#### Resize Modes
-
-- **none**: No resize
-- **fit**: Fit (maintain aspect ratio)
-- **fill**: Fill (crop)
-- **stretch**: Stretch (ignore aspect ratio)
-- **pad**: Pad with black
+**Scaling Modes**:
+- `none`: No scaling
+- `fit`: Fit (maintain aspect ratio, may have black bars)
+- `fill`: Fill (crop to fill)
+- `stretch`: Stretch (don't maintain aspect ratio)
+- `pad`: Pad with black bars
 
 ---
 
-### Load Image Batch 🗂️-Ben
+#### Image Batch Loader 🗂️-Ben
 
 **Category**: `BenNodes/Image`
 
 Batch load all images from a folder.
 
-#### Input Parameters
+**Input Parameters**:
+- `folder_path` (COMBO): Folder selection
+- Other parameters same as "Image Loader"
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| folder_path | COMBO | Folder selection |
-| resize_mode | COMBO | Resize mode |
-| ... | ... | Other parameters same as "Load Image" |
-
-#### Output
-
-- **Image**: IMAGE (batch)
-- **Mask**: MASK (batch)
-- **Width**: INT
-- **Height**: INT
-- **Filename**: STRING (list)
+**Output**:
+- `Image` (IMAGE): Image batch
+- `Mask` (MASK): Mask batch
+- `Width` (INT): Image width
+- `Height` (INT): Image height
+- `Filename` (STRING LIST): File name list
 
 ---
 
-### Image Scaler 🎨-Ben
+#### Image Scaler 🎨-Ben
 
 **Category**: `BenNodes/Image`
 
-Scale, crop, pad images with batch processing support.
+Scale, crop, pad images with batch processing and multi-threading support.
 
-#### Input Parameters
+**Input Parameters**:
+- `image` (IMAGE): Input image
+- `resize_mode` (COMBO): Scaling mode
+- `position` (COMBO): Alignment position
+- `resolution` (COMBO): Target resolution
+- `aspect_ratio` (COMBO): Target aspect ratio
+- `width` (INT): Target width
+- `height` (INT): Target height
+- `feathering` (INT): Feathering amount
+- `upscale_method` (COMBO): Scaling algorithm
+- `pad_color` (STRING): Padding color (RGB format, e.g., "127,127,127")
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| image | IMAGE | Input image |
-| resize_mode | COMBO | Resize mode |
-| position | COMBO | Alignment position |
-| resolution | COMBO | Target resolution |
-| aspect_ratio | COMBO | Target ratio |
-| width | INT | Target width |
-| height | INT | Target height |
-| feathering | INT | Feathering amount |
-| upscale_method | COMBO | Scaling algorithm |
-| pad_color | STRING | Padding color (RGB) |
+**Output**:
+- `IMAGE`: Processed image
+- `MASK`: Mask
+- `width` (INT): Width
+- `height` (INT): Height
 
-#### Output
-
-- **IMAGE**: Processed image
-- **MASK**: Mask
-- **width**: INT
-- **height**: INT
-
-#### Scaling Algorithms
-
-- nearest, bilinear, bicubic, lanczos
+**Features**:
+- Batch processing support
+- Multi-threading acceleration
+- Custom padding color
+- Feathering effect (requires scipy)
 
 ---
 
-### Empty Latent 🎯-Ben
+#### Empty Latent Image 🎯-Ben
 
 **Category**: `BenNodes/Image`
 
-Create empty latent images for image generation.
+Create empty latent image for image generation.
 
-#### Input Parameters
+**Input Parameters**:
+- `resolution` (COMBO): Resolution, default 1080p
+- `aspect_ratio` (COMBO): Aspect ratio, default 16:9
+- `width` (INT): Width, default 1920
+- `height` (INT): Height, default 1080
+- `batch_size` (INT): Batch size, default 1
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| resolution | COMBO | 1080p | Resolution |
-| aspect_ratio | COMBO | 16:9 | Aspect ratio |
-| width | INT | 1920 | Width |
-| height | INT | 1080 | Height |
-| batch_size | INT | 1 | Batch size |
-
-#### Output
-
-- **LATENT**: Empty latent image
+**Output**:
+- `LATENT`: Empty latent image
 
 ---
 
-## 🔧 System Utilities
+### 🔧 System Utilities
 
-### Memory Cleanup Dynamic 🧹-Ben
+#### Memory Cleanup 🧹-Ben
 
-**Category**: `BenNodes/System`
+**Category**: `BenNodes/Control`
 
 Clean VRAM and RAM to optimize system resource usage.
 
-#### Input Parameters
+**Input Parameters**:
+- `cleanup_mode` (COMBO): Cleanup mode (None/VRAM Only/RAM Only/All), default "All"
+- `input` (ANY): Input data (pass-through)
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| cleanup_mode | COMBO | All | Cleanup mode |
-| input | ANY | - | Input data (passthrough) |
+**Output**:
+- `output` (ANY): Pass-through input data
 
-#### Cleanup Modes
+**Cleanup Modes**:
+- `None`: No cleanup, direct pass-through
+- `VRAM Only`: Unload models, clear cache
+- `RAM Only`: Clear file cache, process memory, DLLs
+- `All`: Clean both VRAM and RAM
 
-- **None**: No cleanup
-- **VRAM Only**: Clean VRAM only
-- **RAM Only**: Clean RAM only
-- **All**: Clean both VRAM and RAM
-
-#### Output
-
-- **output**: ANY - Passthrough input data
-
-#### Use Case
-
-Insert in workflow to clean unused models and cache:
-
+**Use Case**:
+Insert in workflow to clean unnecessary models and cache:
 ```
 [Generate Image] → [Memory Cleanup] → [Upscale Image]
 ```
 
 ---
 
-### Switch NOT NULL 🔄-Ben
+### 📝 Text Processing
 
-**Category**: `BenNodes/System`
-
-Output default parameter if not null, otherwise output alternative.
-
-#### Input Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| default | ANY | Default input (optional) |
-| alternative | ANY | Alternative input (optional) |
-
-#### Output
-
-- **output**: ANY
-
-#### Logic
-
-1. If default is not null, return default
-2. Otherwise, if alternative is not null, return alternative
-3. Otherwise, throw error
-
-#### Use Case
-
-Use with "Dynamic Input Bypasser" to handle missing data when nodes are bypassed:
-
-```
-[Node A] ──→ [Switch NOT NULL] ──→ [Node C]
-            ↑ default
-[Node B] ────┘ alternative
-```
-
----
-
-### Dynamic Input Bypasser 🔀-Ben
-
-**Category**: `BenNodes/Control`
-
-Control multiple connected nodes' execution state with a single master switch.
-
-#### Features
-
-- Dynamic input slot auto-management
-- Single master switch controls all connected nodes
-- Passthrough nodes auto-follow
-- Fully independent implementation
-
-#### Usage
-
-1. Add "Dynamic Input Bypasser" to workflow
-2. Connect nodes you want to control to the bypasser's inputs
-3. Use the switch to enable/bypass all connected nodes
-
-#### Switch States
-
-- **yes**: Enable all connected nodes
-- **no**: Bypass all connected nodes
-
-#### Note
-
-⚠️ When nodes are bypassed, they won't execute or produce output. If downstream nodes depend on this output, errors will occur. Recommended to use with "Switch NOT NULL" node.
-
----
-
-## 📝 Text Processing
-
-### Prompt Line Processor 📝-Ben
+#### Prompt Line Processor 📝-Ben
 
 **Category**: `BenNodes/Text`
 
-Process multi-line prompts, extract specified range of lines and apply operations.
+Process multi-line prompts with support for extracting specific line ranges and applying operations.
 
-#### Input Parameters
+**Input Parameters**:
+- `prompt` (STRING): Multi-line text
+- `start_index` (INT): Start line number, default 0
+- `max_rows` (INT): Max rows to return, default 1000
+- `operation` (COMBO): Text operation
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| prompt | STRING | - | Multi-line text |
-| start_index | INT | 0 | Starting line number |
-| max_rows | INT | 1000 | Max lines to return |
-| operation | COMBO | Original | Text operation |
-
-#### Supported Operations
-
+**Supported Operations**:
 - Original, Uppercase, Lowercase, Capitalize, Title Case
-- Strip Whitespace, Reverse, Length, Remove Empty Lines
+- Strip, Reverse, Length, Remove Empty Lines
 
-#### Output
-
-- **STRING**: Processed text (list)
+**Output**:
+- `STRING`: Processed text (list)
 
 ---
 
-### Save Text 📄-Ben
+#### Text Saver 📄-Ben
 
 **Category**: `BenNodes/Text`
 
 Save text or text batch to file.
 
-#### Input Parameters
+**Input Parameters**:
+- `texts` (STRING): Text to save
+- `filename_prefix` (STRING): Filename prefix, default "ComfyUI"
+- `file_extension` (STRING): File extension, default ".txt"
+- `filename` (STRING): Optional filename
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| texts | STRING | - | Text to save |
-| filename_prefix | STRING | ComfyUI | Filename prefix |
-| file_extension | STRING | .txt | File extension |
-| filename | STRING | - | Optional filename |
-
-#### Output
-
+**Output**:
 - UI displays saved file list
 
-#### Usage Example
-
+**Example**:
 ```
-[GLM Analysis] → [Save Text]
+[GLM Analysis] → [Text Saver]
                  filename_prefix: "analysis"
                  file_extension: ".md"
 ```
 
 ---
 
-### Text Split 📝-Ben
+#### Text Splitter 📝-Ben
 
 **Category**: `BenNodes/Text`
 
 Split text by specified delimiter.
 
-#### Input Parameters
+**Input Parameters**:
+- `text` (STRING): Input text
+- `delimiter` (STRING): Delimiter, default "\n"
+- `start_index` (INT): Start index, default 0
+- `max_rows` (INT): Max items to return, default 1000
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| text | STRING | - | Input text |
-| delimiter | STRING | \n | Delimiter |
-| start_index | INT | 0 | Starting index |
-| max_rows | INT | 1000 | Max items to return |
-
-#### Output
-
-- **STRING**: Split text list
+**Output**:
+- `STRING`: Split text list
 
 ---
 
-### Text Join (List Support) 📝-Ben
+#### Text Joiner 📝-Ben
 
 **Category**: `BenNodes/Text`
 
 Join two texts or text lists.
 
-#### Input Parameters
+**Input Parameters**:
+- `text1` (STRING): First text
+- `text2` (STRING): Second text
+- `delimiter` (STRING): Delimiter
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| text1 | STRING | First text |
-| text2 | STRING | Second text |
-| delimiter | STRING | Delimiter |
-
-#### Join Rules
-
+**Join Rules**:
 - Two strings → Direct join
 - String + List → String joins with each list element
 - List + String → Each list element joins with string
+- List + List → Join corresponding elements
 
-#### Output
-
-- **Join Result**: STRING or STRING list
+**Output**:
+- `Join Result` (STRING or STRING LIST)
 
 ---
 
-### Text Processor ✏️-Ben
+#### Text Processor ✏️-Ben
 
 **Category**: `BenNodes/Text`
 
-Process multi-line text, remove empty lines, whitespace, etc.
+Process multi-line text with support for removing empty lines, whitespace, etc.
 
-#### Input Parameters
+**Input Parameters**:
+- `text` (STRING): Multi-line text
+- `process_type` (COMBO): Processing type, default "none"
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| text | STRING | - | Multi-line text |
-| process_type | COMBO | none | Processing type |
+**Processing Types**:
+- `none`: No processing
+- `Remove Empty Lines`: Delete empty lines
+- `Remove Whitespace`: Remove leading/trailing whitespace from each line
+- `Remove Whitespace + Empty Lines`: Both
 
-#### Processing Types
-
-- **none**: No processing
-- **Remove Empty Lines**: Delete empty lines
-- **Strip Whitespace**: Remove leading/trailing whitespace
-- **Strip + Remove Empty**: Both operations
-
-#### Output
-
-- **Text**: STRING - Full text
-- **Text List**: STRING - Line-split list
+**Output**:
+- `Text` (STRING): Complete text
+- `Text List` (STRING): Line-split list
 
 ---
 
-## 🔄 Control Flow
 
-### Dynamic Input Bypasser 🔀-Ben
+### 🎮 Workflow Control
 
-See [System Utilities - Dynamic Input Bypasser](#dynamic-input-bypasser--ben)
+#### Non-Null Switch 🔄-Ben
+
+**Category**: `BenNodes/Control`
+
+Check multiple inputs in order and return the first non-null value, supports multi-level fallback switching.
+
+**Input Parameters**:
+- `Main Source` (ANY): Primary input (optional)
+- `Alternative 1` (ANY): First alternative input (optional)
+- `Alternative 2~N` (ANY): More alternative inputs (dynamically added)
+
+**Output**:
+- `output` (ANY): First non-null value
+
+**Logic**:
+1. Check "Main Source", return if non-null
+2. Otherwise check "Alternative 1", return if non-null
+3. Continue checking "Alternative 2", "Alternative 3"...
+4. If all inputs are null, throw error
+
+**Features**:
+- Dynamic input management: Automatically adds new alternative input when two inputs are connected
+- Supports up to 20 inputs
+- Multi-level fallback switching
+
+**Use Case**:
+Use with "Node Bypasser" to handle missing data when nodes are bypassed:
+```
+[Node A] ──→ [Non-Null Switch] ──→ [Node C]
+            ↑ Main Source
+[Node B] ────┘ Alternative 1
+```
+
+---
+
+#### Node Bypasser 🔀-Ben
+
+**Category**: `BenNodes/Control`
+
+Control multiple connected nodes' execution state with a single master switch.
+
+**Features**:
+- Dynamic input slot auto-management
+- Single master switch controls all connected nodes
+- Pass-through nodes automatically follow
+- Fully independent implementation
+
+**Usage**:
+1. Add "Node Bypasser" to workflow
+2. Connect nodes you want to control to "Node Bypasser" inputs
+3. Use switch to control enable/bypass state of all connected nodes
+
+**Switch States**:
+- `yes`: Enable all connected nodes
+- `no`: Bypass all connected nodes
+
+**Note**:
+⚠️ When nodes are bypassed, they won't execute and won't produce output. If downstream nodes depend on this output, they will error. Recommend using with "Non-Null Switch" node.
+
+---
+
+#### Advanced Node Bypasser 🎯-Ben
+
+**Category**: `BenNodes/Control`
+
+Supports JSON rule-based conditional activation, can define multiple rule sets, each controlling different node combinations.
+
+**Input Parameters**:
+- `json_rules` (STRING): JSON rule configuration
+
+**JSON Rule Format**:
+```json
+{
+  "Rule A": [1, 2, 3],
+  "Rule B": [4, 5, 6]
+}
+```
+
+**Description**:
+- Key: Rule display name
+- Value: Array of input IDs to activate (starting from 1)
+- When rule is selected, corresponding ID inputs are activated, others are disabled
+
+**Use Cases**:
+- Complex workflow scenario switching
+- Quick switching between multiple parameter configurations
+- A/B testing
+
+---
+
+#### Group Bypasser 📦-Ben
+
+**Category**: `BenNodes/Control`
+
+Control group execution state by selecting group name and switch.
+
+**Features**:
+- COMBO selection of group name (auto-updates group list)
+- BOOL switch controls group activate/bypass state
+- On = Activate group, Off = Bypass group
+
+**Usage**:
+1. Create groups in workflow (select multiple nodes, right-click → Convert to Group)
+2. Add "Group Bypasser" node
+3. Select group to control from dropdown
+4. Use switch to control group enable/bypass state
+
+---
+
+#### Advanced Group Bypasser 🎯-Ben
+
+**Category**: `BenNodes/Control`
+
+Supports JSON rule-based conditional group activation, no connection needed, automatically traverses all groups.
+
+**Input Parameters**:
+- `json_rules` (STRING): JSON rule configuration
+
+**JSON Rule Format**:
+```json
+{
+  "Rule A": ["Group1", "Group2"],
+  "Rule B": ["Group3", "Group4"]
+}
+```
+
+**Description**:
+- Key: Rule display name
+- Value: Array of group names to activate
+- When rule is selected, corresponding named groups are activated, others are disabled
+
+**Use Cases**:
+- Multi-scenario workflow switching
+- Batch control of multiple groups
+- Complex workflow management
+
+---
+
+#### Parameter Distributor 🔀-Ben
+
+**Category**: `BenNodes/Control`
+
+Dynamic parameter distribution and replication, automatically replicates output parameter when connected and adds new empty output slot.
+
+**Features**:
+- Dynamic output slot auto-management
+- Automatically adds new output after connection
+- Supports any data type passing
+- Each output independently configured
+- Parameter locking feature
+
+**Output**:
+- Up to 20 dynamic outputs
+
+**Usage**:
+1. Add "Parameter Distributor" node
+2. Configure parameter values on node
+3. Connect output to nodes that need the parameter
+4. New output slot automatically added after connection
+5. Can lock parameters to prevent accidental modification
+
+**Use Cases**:
+- Distribute one parameter to multiple nodes
+- Parameter reuse and management
+- Centralized workflow parameter configuration
 
 ---
 
 ## 💡 Usage Tips
 
-### 1. Batch Image Processing
+### 1. Batch Image Processing Workflow
 
 ```
-[Load Image Batch] → [List Index Selector] → [Image Scaler] → [Save Image]
-                      index: "0,2,4,6"
+[Image Batch Loader] → [List Index Selector] → [Image Scaler] → [Save Image]
+                        index: "0,2,4,6"
 ```
 
-### 2. Conditional Data Flow
+### 2. Multi-Level Fallback Data Flow
 
 ```
-[Node A] ──→ [Switch NOT NULL] ──→ [Save]
-            ↑ default
-[Node B] ────┘ alternative
+[Main Node] ──→ [Non-Null Switch] ──→ [Further Processing]
+               ↑ Main Source
+[Alt 1] ───────┤ Alternative 1
+               │
+[Alt 2] ───────┘ Alternative 2
 ```
 
-### 3. Memory Optimization
+### 3. Memory Optimization Workflow
 
 ```
 [Large Model Gen] → [Memory Cleanup] → [Upscale] → [Memory Cleanup] → [Save]
+                    cleanup_mode: All              cleanup_mode: VRAM Only
 ```
 
-### 4. Batch Text Processing
+### 4. Text Batch Processing
 
 ```
-[Load Text] → [Text Split] → [Prompt Processor] → [Text Join] → [Save Text]
+[Load Text] → [Text Splitter] → [Prompt Line Processor] → [Text Joiner] → [Text Saver]
+             delimiter: \n      operation: Remove Empty Lines
 ```
 
 ### 5. AI Analysis Workflow
 
 ```
-[Load Image] → [GLM Multimodal] → [JSON Parser] → [Save Text]
-                ↑
-         [GLM Config Node]
+[File Uploader] → [GLM Multimodal Analysis] → [JSON Parser] → [Text Saver]
+                         ↑
+                   [GLM Config]
+                   api_key: "your_key"
+```
+
+### 6. Scenario Switching Workflow
+
+```
+[Advanced Group Bypasser]
+json_rules: {
+  "Scenario A": ["Gen Group", "Upscale Group"],
+  "Scenario B": ["Gen Group", "Style Group"],
+  "Scenario C": ["Gen Group", "Upscale Group", "Style Group"]
+}
+```
+
+### 7. Centralized Parameter Management
+
+```
+[Parameter Distributor] ──→ [Node A]
+                       ├──→ [Node B]
+                       ├──→ [Node C]
+                       └──→ [Node D]
 ```
 
 ---
+
 
 ## 🐛 FAQ
 
@@ -726,13 +805,16 @@ pip install -r requirements.txt
 
 ### Q: GLM node errors?
 
-A: Ensure `zhipuai` is installed and provide a valid API key.
+A: Ensure `zhipuai` is installed and provide valid API key:
+```bash
+pip install zhipuai
+```
 
 ### Q: Can't process Office documents?
 
 A: Install Office document processing dependencies:
 ```bash
-pip install python-docx openpyxl python-pptx
+pip install python-docx openpyxl python-pptx xlrd
 ```
 
 Windows systems also need:
@@ -740,7 +822,7 @@ Windows systems also need:
 pip install pywin32
 ```
 
-### Q: Poor feathering effect?
+### Q: Poor image feathering effect?
 
 A: Install scipy for better feathering:
 ```bash
@@ -754,6 +836,44 @@ A: Ensure psutil is installed:
 pip install psutil
 ```
 
+### Q: Node bypasser not working?
+
+A: Ensure:
+1. Nodes are correctly connected
+2. Switch state is correctly set
+3. If downstream nodes error, use "Non-Null Switch" to provide alternative data
+
+### Q: Parameter distributor output is empty?
+
+A: Ensure:
+1. Parameter values are configured on the node
+2. Output is connected to other nodes
+3. Check if parameters are locked
+
+---
+
+## 🔄 Changelog
+
+### v1.0.0 (2026-01-04)
+
+**New Features**:
+- ✨ Added 7 workflow control nodes
+  - Non-Null Switch: Multi-level fallback switching
+  - Node Bypasser: Control multiple nodes execution
+  - Advanced Node Bypasser: JSON rule-based
+  - Group Bypasser: Control group execution
+  - Advanced Group Bypasser: JSON rule-based
+  - Parameter Distributor: Dynamic parameter distribution
+- 🎨 Image processing nodes support custom padding color
+- 🚀 Image scaler supports multi-threaded batch processing
+- 📝 Text processor supports multiple processing modes
+
+**Improvements**:
+- 🔧 Unified node naming convention (all nodes end with Ben)
+- 📚 Improved node documentation and usage instructions
+- 🎯 Optimized memory cleanup logic
+- 🐛 Fixed known issues
+
 ---
 
 ## 📄 License
@@ -765,6 +885,14 @@ MIT License
 ## 🤝 Contributing
 
 Issues and Pull Requests are welcome!
+
+### Contribution Guidelines
+
+1. Fork this repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
 
 ---
 
@@ -781,4 +909,4 @@ Thanks to the ComfyUI community for their support and contributions!
 
 ---
 
-**Last Updated**: 2026/1/2
+**Last Updated**: January 4, 2026

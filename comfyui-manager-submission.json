@@ -6,7 +6,7 @@
         "https://github.com/jianglinbin/ComfyUI-BenNodes"
     ],
     "install_type": "git-clone",
-    "description": "A collection of 21 practical custom nodes for ComfyUI: Image Processing (scaling, loading), Text Processing (split, join, save), Data Conversion (JSON parser, type converter, list selector), AI Analysis (GLM multimodal), System Utilities (memory cleanup, switch NOT NULL, dynamic input bypasser), and more. | ComfyUI 自定义节点集合，提供 21 个实用节点：图像处理（缩放、加载）、文本处理（拆分、连接、保存）、数据转换（JSON解析、类型转换、列表选择器）、AI 分析（GLM多模态）、系统工具（内存清理、非空切换、忽略节点）等功能。",
+    "description": "A collection of 25 practical custom nodes for ComfyUI: Image Processing (scaling, batch loading, feathering), Text Processing (split, join, save, processor), Data Conversion (JSON parser, type converter, list selector), AI Analysis (GLM multimodal for images/videos/PDFs/Office docs), Workflow Control (node bypasser, group bypasser, parameter distributor, non-null switch), System Utilities (memory cleanup, file selector). | ComfyUI 自定义节点集合，提供 25 个实用节点：图像处理（缩放、批量加载、羽化）、文本处理（拆分、连接、保存、处理器）、数据转换（JSON解析、类型转换、列表选择器）、AI 分析（GLM多模态支持图片/视频/PDF/Office文档）、工作流控制（节点忽略、组忽略、参数分发器、非空切换）、系统工具（内存清理、文件选择器）。",
     "nodename_pattern": "Ben$",
-    "pip": ["zhipuai", "python-docx", "openpyxl", "PyPDF2", "scipy", "psutil"]
+    "pip": ["zhipuai", "python-docx", "openpyxl", "python-pptx", "xlrd", "PyMuPDF", "opencv-python", "scipy", "psutil"]
 }
