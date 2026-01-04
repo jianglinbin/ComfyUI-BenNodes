@@ -8,7 +8,7 @@ import multiprocessing
 from typing import List, Tuple
 from ...utils.image.image_utils import process_image_for_comfy
 
-class ImageScaler(BaseResolutionNode):
+class ImageScalerBen(BaseResolutionNode):
     # 使用继承自BaseResolutionNode的SCALE_MODES常量
     @classmethod
     def INPUT_TYPES(s):

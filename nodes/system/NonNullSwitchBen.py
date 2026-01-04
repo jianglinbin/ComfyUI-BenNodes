@@ -1,5 +1,5 @@
 """
-SwitchNOTNULL Node
+NonNullSwitch Node
 非空切换节点 - 优先输出默认参数，若为空则输出备选参数
 """
 
@@ -21,7 +21,7 @@ def is_none(value):
     return value is None
 
 
-class SwitchNOTNULL:
+class NonNullSwitchBen:
     """
     非空切换节点（动态输入版本）
     
@@ -47,7 +47,7 @@ class SwitchNOTNULL:
     RETURN_TYPES = (any_type,)
     RETURN_NAMES = ("output",)
     FUNCTION = "switch"
-    CATEGORY = "BenNodes/系统"
+    CATEGORY = "BenNodes/控制"
     
     def switch(self, **kwargs):
         """
@@ -63,32 +63,32 @@ class SwitchNOTNULL:
             input_order.append(f"备选{i}")
         
         # 调试信息
-        print(f"[SwitchNOTNULL] 收到 {len(kwargs)} 个输入: {list(kwargs.keys())}")
+        print(f"[NonNullSwitch] 收到 {len(kwargs)} 个输入: {list(kwargs.keys())}")
         
         # 按定义的顺序检查输入
         for input_name in input_order:
             if input_name in kwargs:
                 value = kwargs[input_name]
                 value_info = f"<tensor shape={getattr(value, 'shape', None)}>" if hasattr(value, 'shape') else str(value)
-                print(f"[SwitchNOTNULL] {input_name}: type={type(value)}, value={value_info}")
+                print(f"[NonNullSwitch] {input_name}: type={type(value)}, value={value_info}")
                 
                 if not is_none(value):
-                    print(f"[SwitchNOTNULL] 返回 {input_name}")
+                    print(f"[NonNullSwitch] 返回 {input_name}")
                     return (value,)
         
         # 所有输入都为空
         raise ValueError(
-            "SwitchNOTNULL 错误：所有输入都为空！\n"
+            "NonNullSwitch 错误：所有输入都为空！\n"
             "请确保至少连接一个有效的输入。"
         )
 
 
 # 节点类映射
 NODE_CLASS_MAPPINGS = {
-    "SwitchNOTNULL": SwitchNOTNULL
+    "NonNullSwitchBen": NonNullSwitchBen
 }
 
 # 节点显示名称映射
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "SwitchNOTNULL": "非空切换 🔄-Ben"
+    "NonNullSwitchBen": "非空切换"
 }

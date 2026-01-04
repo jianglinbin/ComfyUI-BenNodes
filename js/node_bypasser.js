@@ -54,10 +54,10 @@ function setNodesMode(nodes, mode) {
 // 不需要检测循环连接
 
 app.registerExtension({
-    name: "BenNodes.DynamicInputBypasser",
+    name: "BenNodes.NodeBypasser",
     
     async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData.name !== "DynamicInputBypasser") return;
+        if (nodeData.name !== "NodeBypasserBen") return;
         
         console.log("[DynamicInputBypasser] beforeRegisterNodeDef called");
         
@@ -94,7 +94,6 @@ app.registerExtension({
             
             // 添加输入输出
             this.addInput("", "*");
-            this.addOutput("OPT_CONNECTION", "*");
             
             // 添加主开关
             this.addMasterToggle();

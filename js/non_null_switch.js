@@ -10,12 +10,12 @@ import { app } from "../../scripts/app.js";
  */
 
 app.registerExtension({
-    name: "BenNodes.SwitchNOTNULL",
+    name: "BenNodes.NonNullSwitch",
     
     async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData.name !== "SwitchNOTNULL") return;
+        if (nodeData.name !== "NonNullSwitchBen") return;
         
-        console.log("[SwitchNOTNULL] Registering dynamic input extension");
+        console.log("[NonNullSwitch] Registering dynamic input extension");
         
         const onNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function() {
@@ -40,7 +40,7 @@ app.registerExtension({
             // 初始化状态
             this._schedulePromise = null;
             
-            console.log("[SwitchNOTNULL] Node created with 2 initial inputs");
+            console.log("[NonNullSwitch] Node created with 2 initial inputs");
             
             return r;
         };
@@ -69,7 +69,7 @@ app.registerExtension({
                 const nextIndex = this.inputs.length;
                 const name = nextIndex === 1 ? "备选1" : `备选${nextIndex}`;
                 this.addInput(name, "*");
-                console.log(`[SwitchNOTNULL] All inputs connected, added ${name}`);
+                console.log(`[NonNullSwitch] All inputs connected, added ${name}`);
             } else {
                 // 移除末尾多余的空输入，但保留至少一个空输入
                 let lastConnectedIndex = -1;
@@ -84,7 +84,7 @@ app.registerExtension({
                 const targetLength = Math.max(2, lastConnectedIndex + 2);
                 while (this.inputs.length > targetLength) {
                     this.removeInput(this.inputs.length - 1);
-                    console.log(`[SwitchNOTNULL] Removed excess empty input`);
+                    console.log(`[NonNullSwitch] Removed excess empty input`);
                 }
             }
             
@@ -126,7 +126,7 @@ app.registerExtension({
          * 连接变化时触发
          */
         nodeType.prototype.onConnectionsChange = function(type, index, connected, link_info) {
-            console.log(`[SwitchNOTNULL] Connection changed: type=${type}, index=${index}, connected=${connected}`);
+            console.log(`[NonNullSwitch] Connection changed: type=${type}, index=${index}, connected=${connected}`);
             this.scheduleStabilize(100);
         };
         
@@ -170,4 +170,4 @@ app.registerExtension({
     }
 });
 
-console.log("[SwitchNOTNULL] Extension loaded");
+console.log("[NonNullSwitch] Extension loaded");

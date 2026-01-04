@@ -61,7 +61,7 @@ class MemoryCleanupDynamicBen:
     RETURN_TYPES = (any_type,)
     RETURN_NAMES = ("output",)
     FUNCTION = "execute"
-    CATEGORY = "BenNodes/系统"
+    CATEGORY = "BenNodes/控制"
     OUTPUT_NODE = True
     
     @classmethod

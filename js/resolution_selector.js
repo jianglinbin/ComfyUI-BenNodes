@@ -4,7 +4,7 @@ import { getWidget, hideWidget, showWidget } from './shared.js';
 app.registerExtension({
     name: 'BenNodes.ResolutionSelector',
     async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData.name !== 'ResolutionSelector') return;
+        if (nodeData.name !== 'ResolutionSelectorBen') return;
 
         const origCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {

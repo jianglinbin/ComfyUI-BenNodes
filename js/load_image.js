@@ -2,9 +2,9 @@ import { app } from "../../scripts/app.js";
 import { RESOLUTIONS, ASPECT_RATIOS, getWidget, hideWidget, showWidget, calcDims, updateResolutionControls } from "./shared.js";
 
 app.registerExtension({
-    name: "ben.LoadImageBatchBen",
+    name: "ben.ImageBatchLoader",
     async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData.name !== "LoadImageBatchBen") return;
+        if (nodeData.name !== "ImageBatchLoaderBen") return;
 
         const origCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
@@ -141,7 +141,7 @@ app.registerExtension({
                     node.size = node.computeSize();
                     node.setDirtyCanvas(true);
                 } catch (e) {
-                    console.error("[LoadImageBen] update error:", e);
+                    console.error("[ImageBatchLoader] update error:", e);
                 }
             };
 

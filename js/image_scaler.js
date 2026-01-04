@@ -4,7 +4,7 @@ import { RESOLUTIONS, ASPECT_RATIOS, getWidget, hideWidget, showWidget, calcDims
 app.registerExtension({
     name: "ben.imageResolutionEditor.2",
     async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData.name !== "ImageScaler") return;
+        if (nodeData.name !== "ImageScalerBen") return;
 
         // 移除所有宽度限制，让节点可以自由调整大小
         

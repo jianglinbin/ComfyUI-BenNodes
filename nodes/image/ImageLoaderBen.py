@@ -28,7 +28,7 @@ class LoadImageBen(BaseResolutionNode):
             }
         }
 
-    CATEGORY = "BenNodes/image"
+    CATEGORY = "BenNodes/图像"
     DESCRIPTION = "加载单张图片，支持各种常见图片格式"
 
     RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT", "STRING")

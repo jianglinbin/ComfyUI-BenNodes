@@ -10,7 +10,7 @@ app.registerExtension({
     
     
     async nodeCreated(node) {
-        if (node.comfyClass !== "MemoryCleanupDynamicBen") return;
+        if (node.comfyClass !== "MemoryCleanupBen") return;
         
         console.log(`[MemoryCleanup] Node created: ${node.id}`);
         
@@ -50,7 +50,7 @@ app.registerExtension({
     },
     
     async loadedGraphNode(node) {
-        if (node.comfyClass !== "MemoryCleanupDynamicBen") return;
+        if (node.comfyClass !== "MemoryCleanupBen") return;
         
         console.log(`[MemoryCleanup] Graph loaded, node: ${node.id}`);
         

@@ -38,7 +38,7 @@ class ImageLoaderBatchBen(BaseResolutionNode):
     RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT", "STRING")
     RETURN_NAMES = ("图片", "遮罩", "宽度", "高度", "文件名")
     FUNCTION = "load_and_process_images"
-    CATEGORY = "BenNodes/image"
+    CATEGORY = "BenNodes/图像"
 
     def _process_image_task(self, img_path: str, resize_mode: str, target_width: int, target_height: int, feathering: int, upscale_method: str, position: str = "center"):
         """

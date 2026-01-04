@@ -5,7 +5,7 @@ Dynamic Input Bypasser Node
 这是一个虚拟节点，主要逻辑在前端 JavaScript 实现
 """
 
-class DynamicInputBypasser:
+class NodeBypasserBen:
     """
     Dynamic Input Bypasser 节点
     
@@ -13,7 +13,6 @@ class DynamicInputBypasser:
     - 动态输入槽位自动管理
     - 单一主开关控制所有连接节点
     - 透传节点自动跟随
-    - 完全独立实现，不依赖 rgthree
     """
     
     @classmethod
@@ -37,10 +36,10 @@ class DynamicInputBypasser:
 
 # 节点类映射
 NODE_CLASS_MAPPINGS = {
-    "DynamicInputBypasser": DynamicInputBypasser
+    "NodeBypasserBen": NodeBypasserBen
 }
 
 # 节点显示名称映射
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "DynamicInputBypasser": "忽略节点 🔀-Ben"
+    "NodeBypasserBen": "忽略节点"
 }

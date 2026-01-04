@@ -5,7 +5,7 @@
 
 from ...utils.base.base_node import BaseResolutionNode
 
-class ResolutionSelector(BaseResolutionNode):
+class ResolutionSelectorBen(BaseResolutionNode):
     """分辨率选择器节点"""
 
     # 基于宽度计算分辨率（重写基类默认值）
