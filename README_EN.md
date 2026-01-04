@@ -173,7 +173,7 @@ Analyze images, videos, PDFs, Office documents, or text files using GLM model, w
 
 ### 📊 Data Processing
 
-#### Resolution Selector 📐-Ben
+#### Resolution Selector
 
 **Category**: `BenNodes/Data`
 
@@ -192,7 +192,7 @@ Provides preset resolutions and aspect ratios, automatically calculates output w
 
 ---
 
-#### List Index Selector 📌-Ben
+#### List Index Selector
 
 **Category**: `BenNodes/Data`
 
@@ -213,7 +213,7 @@ Select elements by index from list, supports batch image processing.
 
 ---
 
-#### Advanced List Index Selector 🎯-Ben
+#### Advanced List Index Selector
 
 **Category**: `BenNodes/Data`
 
@@ -239,7 +239,7 @@ Result: [5, 7, 9]
 
 ---
 
-#### JSON Parser 📋-Ben
+#### JSON Parser
 
 **Category**: `BenNodes/Data`
 
@@ -274,7 +274,7 @@ Path: `user.name` → Output: "John"
 
 ---
 
-#### Type Converter 🔄-Ben
+#### Type Converter
 
 **Category**: `BenNodes/Data`
 
@@ -300,7 +300,7 @@ Convert any type of input to specified data type.
 
 ### 📁 File Operations
 
-#### File Uploader 📂-Ben
+#### File Uploader
 
 **Category**: `BenNodes/File`
 
@@ -319,7 +319,7 @@ Select files from file system, supports images, videos, documents, etc.
 
 ### 🖼️ Image Processing
 
-#### Image Loader 🖼️-Ben
+#### Image Loader
 
 **Category**: `BenNodes/Image`
 
@@ -352,7 +352,7 @@ Load single image with support for multiple formats and scaling modes.
 
 ---
 
-#### Image Batch Loader 🗂️-Ben
+#### Image Batch Loader
 
 **Category**: `BenNodes/Image`
 
@@ -371,7 +371,7 @@ Batch load all images from a folder.
 
 ---
 
-#### Image Scaler 🎨-Ben
+#### Image Scaler
 
 **Category**: `BenNodes/Image`
 
@@ -403,7 +403,7 @@ Scale, crop, pad images with batch processing and multi-threading support.
 
 ---
 
-#### Empty Latent Image 🎯-Ben
+#### Empty Latent Image
 
 **Category**: `BenNodes/Image`
 
@@ -423,7 +423,7 @@ Create empty latent image for image generation.
 
 ### 🔧 System Utilities
 
-#### Memory Cleanup 🧹-Ben
+#### Memory Cleanup
 
 **Category**: `BenNodes/Control`
 
@@ -452,7 +452,7 @@ Insert in workflow to clean unnecessary models and cache:
 
 ### 📝 Text Processing
 
-#### Prompt Line Processor 📝-Ben
+#### Prompt Line Processor
 
 **Category**: `BenNodes/Text`
 
@@ -473,7 +473,7 @@ Process multi-line prompts with support for extracting specific line ranges and 
 
 ---
 
-#### Text Saver 📄-Ben
+#### Text Saver
 
 **Category**: `BenNodes/Text`
 
@@ -497,7 +497,7 @@ Save text or text batch to file.
 
 ---
 
-#### Text Splitter 📝-Ben
+#### Text Splitter
 
 **Category**: `BenNodes/Text`
 
@@ -514,7 +514,7 @@ Split text by specified delimiter.
 
 ---
 
-#### Text Joiner 📝-Ben
+#### Text Joiner
 
 **Category**: `BenNodes/Text`
 
@@ -536,7 +536,7 @@ Join two texts or text lists.
 
 ---
 
-#### Text Processor ✏️-Ben
+#### Text Processor
 
 **Category**: `BenNodes/Text`
 
@@ -561,7 +561,7 @@ Process multi-line text with support for removing empty lines, whitespace, etc.
 
 ### 🎮 Workflow Control
 
-#### Non-Null Switch 🔄-Ben
+#### Non-Null Switch
 
 **Category**: `BenNodes/Control`
 
@@ -596,7 +596,7 @@ Use with "Node Bypasser" to handle missing data when nodes are bypassed:
 
 ---
 
-#### Node Bypasser 🔀-Ben
+#### Node Bypasser
 
 **Category**: `BenNodes/Control`
 
@@ -622,7 +622,7 @@ Control multiple connected nodes' execution state with a single master switch.
 
 ---
 
-#### Advanced Node Bypasser 🎯-Ben
+#### Advanced Node Bypasser
 
 **Category**: `BenNodes/Control`
 
@@ -651,7 +651,7 @@ Supports JSON rule-based conditional activation, can define multiple rule sets, 
 
 ---
 
-#### Group Bypasser 📦-Ben
+#### Group Bypasser
 
 **Category**: `BenNodes/Control`
 
@@ -670,7 +670,7 @@ Control group execution state by selecting group name and switch.
 
 ---
 
-#### Advanced Group Bypasser 🎯-Ben
+#### Advanced Group Bypasser
 
 **Category**: `BenNodes/Control`
 
@@ -699,7 +699,7 @@ Supports JSON rule-based conditional group activation, no connection needed, aut
 
 ---
 
-#### Parameter Distributor 🔀-Ben
+#### Parameter Distributor
 
 **Category**: `BenNodes/Control`
 
