@@ -5,6 +5,7 @@
 import { app } from "../../scripts/app.js";
 
 // 注册扩展
+import { t } from "./i18n.js";
 app.registerExtension({
     name: "Ben.MemoryCleanupDynamicBen",
     
@@ -16,15 +17,15 @@ app.registerExtension({
         
         // 设置中文标签
         const widgetLabels = {
-            "cleanup_mode": "清理模式"
+            "cleanup_mode": t("cleanup_mode_label")
         };
         
         // 为每个清理模式添加描述
         const modeDescriptions = {
-            "无": "⏭️ 不执行清理\n• 直接传递数据\n• 不清理任何内存\n\n适用：调试或跳过清理",
-            "仅显存": "💾 只清理显存\n• 卸载模型\n• 清空VRAM缓存\n\n适用：显存不足时",
-            "仅内存": "🧠 只清理内存\n• 清理文件缓存\n• 清理进程内存\n• 清理未使用DLL\n\n适用：内存不足时",
-            "全部": "🔥 深度清理\n• 显存：卸载模型+清空缓存\n• 内存：全部清理\n\n适用：严重内存不足"
+            "无": t("cleanup_desc_none"),
+            "仅显存": t("cleanup_desc_vram_only"),
+            "仅内存": t("cleanup_desc_ram_only"),
+            "全部": t("cleanup_desc_all")
         };
         
         if (node.widgets) {
@@ -56,15 +57,15 @@ app.registerExtension({
         
         // 设置中文标签
         const widgetLabels = {
-            "cleanup_mode": "清理模式"
+            "cleanup_mode": t("cleanup_mode_label")
         };
         
         // 为每个清理模式添加描述
         const modeDescriptions = {
-            "无": "⏭️ 不执行清理\n• 直接传递数据\n• 不清理任何内存\n适用：调试或跳过清理",
-            "仅显存": "💾 只清理显存\n• 卸载模型\n• 清空VRAM缓存\n适用：显存不足时",
-            "仅内存": "🧠 只清理内存\n• 清理文件缓存\n• 清理进程内存\n• 清理未使用DLL\n适用：内存不足时",
-            "全部": "🔥 深度清理\n• 显存：卸载模型+清空缓存\n• 内存：全部清理\n适用：严重内存不足"
+            "无": t("cleanup_desc_none"),
+            "仅显存": t("cleanup_desc_vram_only"),
+            "仅内存": t("cleanup_desc_ram_only"),
+            "全部": t("cleanup_desc_all")
         };
         
         if (node.widgets) {

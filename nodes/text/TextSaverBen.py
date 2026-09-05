@@ -1,11 +1,9 @@
 import os
-import time
-import logging
-import json
 import numpy as np
-import torch
 
 import folder_paths
+
+from ...utils.i18n import t
 
 class SaveTextBen:
     def __init__(self):
@@ -17,12 +15,12 @@ class SaveTextBen:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "texts": ("STRING", {"tooltip": "要保存的文本或文本批次"}),
-                "filename_prefix": ("STRING", {"default": "ComfyUI", "tooltip": "保存文件的前缀。可以包含格式化信息，如%date:yyyy-MM-dd%或其他变量"}),
-                "file_extension": ("STRING", {"default": ".txt", "tooltip": "保存文件的后缀名，例如.txt、.md、.json等"})
+                "texts": ("STRING", {"tooltip": t("text_saver_texts_tooltip")}),
+                "filename_prefix": ("STRING", {"default": "ComfyUI", "tooltip": t("text_saver_prefix_tooltip")}),
+                "file_extension": ("STRING", {"default": ".txt", "tooltip": t("text_saver_extension_tooltip")})
             },
             "optional": {
-                "filename": ("STRING", {"tooltip": "可选的文件名。如果是批次处理，可以输入文件名列表。如果包含文件后缀，会自动去除"})
+                "filename": ("STRING", {"tooltip": t("text_saver_filename_tooltip")})
             },
             "hidden": {
                 "prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"
@@ -34,8 +32,8 @@ class SaveTextBen:
 
     OUTPUT_NODE = True
 
-    CATEGORY = "BenNodes/文本"
-    DESCRIPTION = "将输入的文本或文本批次保存到ComfyUI输出目录"
+    CATEGORY = f"BenNodes/{t('common_cat_text')}"
+    DESCRIPTION = t("text_saver_description")
 
     def save_texts(self, texts, filename_prefix="ComfyUI", file_extension=".txt", filename=None, prompt=None, extra_pnginfo=None):
         filename_prefix += self.prefix_append
@@ -83,28 +81,11 @@ class SaveTextBen:
                 name, _ = os.path.splitext(filename_list[i])
                 filename_list[i] = name
         
-        # 获取基本保存路径
-        base_output_folder, default_filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
+        # 获取保存路径（get_save_image_path 已完成子目录解析、目录创建与计数）
+        full_output_folder, default_filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(
             filename_prefix, self.output_dir, 0, 0
         )
-        
-        # 确保子文件夹被正确解析和创建
-        # 从filename_prefix中提取子文件夹（处理不同的路径分隔符）
-        if '\\' in filename_prefix or '/' in filename_prefix:
-            # 提取路径部分
-            path_part = os.path.dirname(filename_prefix)
-            if path_part:
-                # 创建完整的输出文件夹路径
-                full_output_folder = os.path.join(self.output_dir, path_part)
-            else:
-                full_output_folder = base_output_folder
-        else:
-            full_output_folder = base_output_folder
-        
-        # 确保文件夹存在
-        if not os.path.exists(full_output_folder):
-            os.makedirs(full_output_folder, exist_ok=True)
-        
+
         results = list()
         
         # 确保文件后缀以.开头

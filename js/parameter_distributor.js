@@ -1,6 +1,7 @@
 import { app } from "../../scripts/app.js";
 
 // 获取节点输入的配置信息
+import { t } from "./i18n.js";
 function getInputConfig(node, inputIndex) {
     if (!node || !node.inputs || !node.inputs[inputIndex]) return null;
     
@@ -149,13 +150,13 @@ app.registerExtension({
         // 添加锁定开关 widget
         nodeType.prototype.addLockWidget = function() {
             if (!this.lockWidget) {
-                this.lockWidget = this.addWidget("toggle", "🔒 锁定参数", this._paramsLocked || false, (value) => {
+                this.lockWidget = this.addWidget("toggle", t("lock_params"), this._paramsLocked || false, (value) => {
                     console.log("[DynamicOutputReplicator] Lock toggled:", value);
                     this._paramsLocked = value;
                     if (this.graph) {
                         this.graph.setDirtyCanvas(true, false);
                     }
-                }, { on: "已锁定", off: "未锁定" });
+                }, { on: t("locked"), off: t("unlocked") });
             }
         };
         
@@ -179,7 +180,7 @@ app.registerExtension({
             }
             
             options.unshift({
-                content: "刷新输出",
+                content: t("refresh_outputs"),
                 callback: () => {
                     this.scheduleStabilize(1);
                 }

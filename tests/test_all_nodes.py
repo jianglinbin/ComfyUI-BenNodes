@@ -39,7 +39,7 @@ def test_python_js_registration_match():
     print(f"\n扫描 JS 文件...")
     
     for js_file in os.listdir(js_dir):
-        if not js_file.endswith('.js') or js_file == 'shared.js':
+        if not js_file.endswith('.js') or js_file in ('shared.js', 'bypasser_common.js'):
             continue
         
         js_path = os.path.join(js_dir, js_file)
@@ -89,11 +89,8 @@ def test_python_js_registration_match():
             print(f"⚠ {py_name:40s} - Python ✓ JS ✗ (可能不需要 JS)")
     
     # 检查 JS 中是否有 Python 中没有的注册
-    # 排除一些特殊的 JS 扩展（不是独立节点）
-    js_only_exclusions = ['FileUploaderMultiBen']  # 这是 FileUploader 的扩展功能，不是独立节点
-    
     for js_name in sorted(js_registrations.keys()):
-        if js_name not in python_registrations and js_name not in js_only_exclusions:
+        if js_name not in python_registrations:
             errors.append(f"✗ {js_name:40s} - JS 中存在但 Python 中不存在")
     
     print("\n" + "=" * 80)
@@ -176,10 +173,8 @@ def test_display_names():
         else:
             print(f"✓ {reg_name:40s} → '{display_name}'")
     
-    if errors:
-        print(f"\n✗ {len(errors)} 个显示名称包含 'Ben'")
-        return False
-    
+    assert not errors, f"{len(errors)} 个显示名称包含 'Ben'"
+
     print(f"\n✓ 所有 {len(display_names)} 个显示名称都不包含 'Ben'")
     return True
 
@@ -208,8 +203,8 @@ def test_category_structure():
         with open(node_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # 查找 CATEGORY 定义
-        category_match = re.search(r'CATEGORY\s*=\s*["\']([^"\']+)["\']', content)
+        # 查找 CATEGORY 定义（兼容普通字符串与 f-string：f"BenNodes/{t('common_cat_x')}"）
+        category_match = re.search(r'CATEGORY\s*=\s*f?["\']([^"\'{]+)', content)
         
         if not category_match:
             errors.append(f"✗ {rel_path:60s} - 未找到 CATEGORY")
@@ -243,7 +238,7 @@ def test_file_names():
     node_files = []
     
     # 排除辅助文件（不是节点的文件）
-    exclude_files = ['office_processor.py', 'text_processor.py', 'vision_processor.py']
+    exclude_files = []
     
     for root, dirs, files in os.walk(nodes_dir):
         for file in files:
@@ -264,10 +259,8 @@ def test_file_names():
             success.append(rel_path)
             print(f"✓ {rel_path:60s}")
     
-    if errors:
-        print(f"\n✗ {len(errors)} 个文件名不包含 'Ben' 后缀")
-        return False
-    
+    assert not errors, f"{len(errors)} 个文件名不包含 'Ben' 后缀"
+
     print(f"\n✓ 所有 {len(success)} 个文件名都包含 'Ben' 后缀")
     return True
 
@@ -276,23 +269,30 @@ if __name__ == "__main__":
     print("\n" + "=" * 80)
     print("ComfyUI-BenNodes 全面测试")
     print("=" * 80 + "\n")
-    
-    test1 = test_file_names()
-    test2 = test_ben_suffix()
-    test3 = test_display_names()
-    test4 = test_category_structure()
-    test5 = test_python_js_registration_match()
-    
+
+    test_suites = [
+        ("文件名 Ben 后缀测试", test_file_names),
+        ("注册名 Ben 后缀测试", test_ben_suffix),
+        ("显示名称测试", test_display_names),
+        ("CATEGORY 结构测试", test_category_structure),
+        ("Python-JS 匹配测试", test_python_js_registration_match),
+    ]
+
+    results = {}
+    for name, fn in test_suites:
+        try:
+            results[name] = bool(fn())
+        except AssertionError as e:
+            print(f"\n断言失败: {e}")
+            results[name] = False
+
     print("\n" + "=" * 80)
     print("总体测试结果")
     print("=" * 80)
-    print(f"文件名 Ben 后缀测试: {'✓ 通过' if test1 else '✗ 失败'}")
-    print(f"注册名 Ben 后缀测试: {'✓ 通过' if test2 else '✗ 失败'}")
-    print(f"显示名称测试: {'✓ 通过' if test3 else '✗ 失败'}")
-    print(f"CATEGORY 结构测试: {'✓ 通过' if test4 else '✗ 失败'}")
-    print(f"Python-JS 匹配测试: {'✓ 通过' if test5 else '✗ 失败'}")
-    
-    if test1 and test2 and test3 and test4 and test5:
+    for name, _ in test_suites:
+        print(f"{name}: {'✓ 通过' if results[name] else '✗ 失败'}")
+
+    if all(results.values()):
         print("\n" + "=" * 80)
         print("🎉 所有测试通过！")
         print("=" * 80)

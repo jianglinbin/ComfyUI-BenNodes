@@ -1,6 +1,6 @@
 # ComfyUI-BenNodes
 
-A collection of 25 practical custom nodes for ComfyUI, covering image processing, text processing, data conversion, AI analysis, system utilities, and workflow control.
+A collection of 22 practical custom nodes for ComfyUI, covering image processing, text processing, data conversion, system utilities, and workflow control.
 
 [中文](README.md) | English
 
@@ -9,9 +9,19 @@ A collection of 25 practical custom nodes for ComfyUI, covering image processing
 - 🖼️ **Image Processing**: Smart scaling, batch loading, multiple alignment modes
 - 📝 **Text Processing**: Split, join, save, multi-line processing
 - 📊 **Data Conversion**: JSON parser, type converter, list selector
-- 🤖 **AI Analysis**: GLM multimodal analysis for images, videos, PDFs, Office documents
 - 🔧 **System Utilities**: Memory cleanup, non-null switch, file selector
 - 🎮 **Workflow Control**: Node bypasser, group bypasser, parameter distributor
+- 🌐 **Bilingual (zh/en)**: Node display names, tooltips and error messages in Chinese and English
+
+## 🌐 Bilingual Support (i18n)
+
+Node display names, categories, parameter tooltips, and error messages support both Chinese and English. Language resolution priority:
+
+1. Environment variable `BENNODES_LANG` (`zh` / `en`, case-insensitive)
+2. The `"language"` field in `ben_nodes_config.json` at the project root (copy `ben_nodes_config.json.example` as a starting point)
+3. Defaults to `zh`
+
+> Note: The language is determined once when the node package is loaded. Restart ComfyUI after changing the configuration. Combo option values (e.g. "去除空行", "仅显存") are workflow-saved values and are kept unchanged for backward compatibility.
 
 ## 📦 Installation
 
@@ -31,10 +41,6 @@ pip install -r requirements.txt
 ```
 
 ## 📚 Node List
-
-### 🤖 AI Related (2 nodes)
-- **GLM Config** - Configure GLM model parameters
-- **GLM Multimodal Analysis** - Analyze images, videos, PDFs, Office documents
 
 ### 📊 Data Processing (5 nodes)
 - **Resolution Selector** - Preset resolution and aspect ratio selection
@@ -79,99 +85,15 @@ pip install -r requirements.txt
 pip install Pillow psutil
 ```
 
-### AI Features (Required for GLM nodes)
-```bash
-pip install zhipuai
-```
-
 ### Image Enhancement (Recommended, for feathering)
 ```bash
 pip install scipy
-```
-
-### Office Document Processing (Optional)
-```bash
-pip install python-docx openpyxl python-pptx xlrd
-```
-
-### Windows Specific (Optional, Windows only)
-```bash
-pip install pywin32
-```
-
-### PDF and Video Processing (Optional)
-```bash
-pip install PyMuPDF opencv-python
 ```
 
 ---
 
 ## 📖 Detailed Documentation
 
-
-### 🤖 AI Related
-
-#### GLM Config 🧠-Ben
-
-**Category**: `BenNodes/AI`
-
-Configure GLM model parameters including model selection, temperature, token limits, etc.
-
-**Input Parameters**:
-- `vision_model` (STRING): Vision model name, default "glm-4.6v-flash"
-- `text_model` (STRING): Text model name, default "glm-4.5-flash"
-- `max_pages` (INT): Max pages for PDF processing, 0 means unlimited
-- `max_tokens` (INT): Max tokens for model generation, default 8192
-- `temperature` (FLOAT): Control output randomness, recommended 0.1-0.3
-- `top_p` (FLOAT): Limit candidate word range, recommended 0.5-0.7
-- `chunk_mode` (COMBO): Large file processing mode (auto/manual)
-- `thinking_enabled` (BOOLEAN): Enable thinking feature
-
-**Output**:
-- `glm_config`: GLM configuration object
-
-**Example**:
-```
-[GLM Config] → [GLM Multimodal Analysis]
-```
-
----
-
-#### GLM Multimodal Analysis 🧠-Ben
-
-**Category**: `BenNodes/AI`
-
-Analyze images, videos, PDFs, Office documents, or text files using GLM model, with support for large file chunking.
-
-**Input Parameters**:
-- `prompt` (STRING): Analysis prompt
-- `system_prompt` (STRING): System prompt to define model role
-- `input` (ANY): Supports ComfyUI image/video data types or file path string
-- `glm_config` (GLM_CONFIG): GLM configuration (optional)
-- `api_key` (STRING): GLM API key
-
-**Output**:
-- `Analysis Result` (STRING LIST): Analysis result list
-
-**Supported File Types**:
-- Images: .jpg, .jpeg, .png, .bmp, .gif, .webp
-- Videos: .mp4, .avi, .mov, .webm, .mkv
-- PDF: .pdf
-- Word: .docx, .doc
-- Excel: .xlsx, .xls
-- PowerPoint: .pptx, .ppt
-- Text: .txt, .md, .json, .xml, .csv, .log, .py, .js, .html, .css
-
-**Example**:
-```
-[Image Loader] → [GLM Multimodal Analysis] → [Text Saver]
-                        ↑
-                  [GLM Config]
-```
-
----
-
-### 📊 Data Processing
 
 #### Resolution Selector
 
@@ -490,7 +412,7 @@ Save text or text batch to file.
 
 **Example**:
 ```
-[GLM Analysis] → [Text Saver]
+[Text Processor] → [Text Saver]
                  filename_prefix: "analysis"
                  file_extension: ".md"
 ```
@@ -762,16 +684,7 @@ Dynamic parameter distribution and replication, automatically replicates output 
              delimiter: \n      operation: Remove Empty Lines
 ```
 
-### 5. AI Analysis Workflow
-
-```
-[File Uploader] → [GLM Multimodal Analysis] → [JSON Parser] → [Text Saver]
-                         ↑
-                   [GLM Config]
-                   api_key: "your_key"
-```
-
-### 6. Scenario Switching Workflow
+### 5. Scenario Switching Workflow
 
 ```
 [Advanced Group Bypasser]
@@ -782,7 +695,7 @@ json_rules: {
 }
 ```
 
-### 7. Centralized Parameter Management
+### 6. Centralized Parameter Management
 
 ```
 [Parameter Distributor] ──→ [Node A]
@@ -801,25 +714,6 @@ json_rules: {
 A: Check if dependencies are fully installed:
 ```bash
 pip install -r requirements.txt
-```
-
-### Q: GLM node errors?
-
-A: Ensure `zhipuai` is installed and provide valid API key:
-```bash
-pip install zhipuai
-```
-
-### Q: Can't process Office documents?
-
-A: Install Office document processing dependencies:
-```bash
-pip install python-docx openpyxl python-pptx xlrd
-```
-
-Windows systems also need:
-```bash
-pip install pywin32
 ```
 
 ### Q: Poor image feathering effect?

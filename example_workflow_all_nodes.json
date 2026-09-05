@@ -938,97 +938,6 @@
             "widgets_values": ["append", "\n"]
         },
         {
-            "id": 15,
-            "type": "GLMConfigNodeBen",
-            "pos": [800, 950],
-            "size": [315, 80],
-            "flags": {},
-            "order": 14,
-            "mode": 0,
-            "inputs": [
-                {
-                    "localized_name": "model",
-                    "name": "model",
-                    "type": "COMBO",
-                    "widget": {"name": "model"},
-                    "link": null
-                }
-            ],
-            "outputs": [
-                {
-                    "localized_name": "GLM_CONFIG",
-                    "name": "GLM_CONFIG",
-                    "type": "GLM_CONFIG",
-                    "links": [1]
-                }
-            ],
-            "properties": {
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "input_ue_unconnectable": {}
-                },
-                "aux_id": "jianglinbin/ComfyUI-BenNodes",
-                "ver": "1.0.0",
-                "Node name for S&R": "GLMConfigNodeBen"
-            },
-            "widgets_values": ["glm-4v-flash"]
-        },
-        {
-            "id": 16,
-            "type": "GLMNodeBen",
-            "pos": [1150, 950],
-            "size": [315, 140],
-            "flags": {},
-            "order": 15,
-            "mode": 0,
-            "inputs": [
-                {
-                    "localized_name": "config",
-                    "name": "config",
-                    "type": "GLM_CONFIG",
-                    "link": 1
-                },
-                {
-                    "localized_name": "file_input",
-                    "name": "file_input",
-                    "type": "*",
-                    "link": null
-                },
-                {
-                    "localized_name": "prompt",
-                    "name": "prompt",
-                    "type": "STRING",
-                    "widget": {"name": "prompt"},
-                    "link": null
-                },
-                {
-                    "localized_name": "max_tokens",
-                    "name": "max_tokens",
-                    "type": "INT",
-                    "widget": {"name": "max_tokens"},
-                    "link": null
-                }
-            ],
-            "outputs": [
-                {
-                    "localized_name": "STRING",
-                    "name": "STRING",
-                    "type": "STRING",
-                    "links": null
-                }
-            ],
-            "properties": {
-                "ue_properties": {
-                    "widget_ue_connectable": {},
-                    "input_ue_unconnectable": {}
-                },
-                "aux_id": "jianglinbin/ComfyUI-BenNodes",
-                "ver": "1.0.0",
-                "Node name for S&R": "GLMNodeBen"
-            },
-            "widgets_values": ["分析这个文件", 1000]
-        },
-        {
             "id": 17,
             "type": "FileUploaderBen",
             "pos": [100, 1150],
@@ -1340,9 +1249,7 @@
             "widgets_values": [false]
         }
     ],
-    "links": [
-        [1, 15, 0, 16, 0, "GLM_CONFIG"]
-    ],
+    "links": [],
     "groups": [
         {
             "id": 1,
@@ -1370,7 +1277,7 @@
         },
         {
             "id": 4,
-            "title": "AI & 文件 (AI & File)",
+            "title": "文件 (File)",
             "bounding": [80, 1130, 1420, 150],
             "color": "#88a",
             "font_size": 24,

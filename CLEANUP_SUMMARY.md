@@ -123,3 +123,45 @@ ComfyUI-BenNodes/
 - 所有 `__pycache__` 目录已被 .gitignore 忽略，不会再被提交
 - 敏感信息（如 token）已从项目中移除
 - 测试文件保留，方便后续开发和验证
+
+---
+
+# 2026-09-05 深度重构与 i18n 记录
+
+> 本节为最新状态，覆盖上文中的旧统计（24 节点 / ai 目录等已过时）。
+
+## 移除 LLM 相关代码
+
+- 删除 `nodes/ai/` 整个目录（GLMNodeBen、GLMConfigNodeBen 及 processors）
+- 清理 `requirements.txt` 中 GLM 专属依赖（zhipuai、PyMuPDF、opencv-python 等）
+- 同步清理 `__init__.py`、示例工作流、`comfyui-manager-submission.json`、README 中相关内容
+
+## Bug 修复
+
+- `ImageBatchLoaderBen`: 多线程批次顺序错乱 → 按原始索引回填
+- `AdvancedListIndexSelectorBen`: 参数名 `list` 遮蔽内建类型导致崩溃 → `_BUILTIN_LIST/_BUILTIN_TUPLE`；步长语义与 tooltip 对齐
+- `image_utils.apply_feather`: 重复计算删除；遮罩语义注释修正（255=被遮蔽）
+
+## 死代码 / 冗余清理
+
+- 移除重复 `AnyType` 定义、未使用函数与导入、死注册表、AI 思考注释残留
+- 日志规范化：全部 `print()` → `logger`，删除模块级 `basicConfig()`
+
+## 前端重构
+
+- 提取 `js/shared.js`（分辨率控件联动）与 `js/bypasser_common.js`（bypasser 公共逻辑）
+- 前后端常量（ASPECT_RATIOS 等）对齐
+
+## i18n 中英双语
+
+- 新增 `utils/i18n/`（`t()` 查表 + zh/en 词典各 106 key）
+- 语言优先级：`BENNODES_LANG` 环境变量 → `ben_nodes_config.json` → 默认 `zh`
+- 覆盖范围：22 个节点的显示名、CATEGORY、tooltip/placeholder、DESCRIPTION、错误消息、RETURN_NAMES
+- 前端新增 `js/i18n.js`（跟随 ComfyUI Locale / 浏览器语言），覆盖上传按钮、bypasser 规则提示、内存清理描述、参数分发器开关等
+- 保持不变的项（工作流兼容）：下拉选项值（"去除空行"、"仅显存"等）、NonNullSwitch 端口名（后端协议）、`RESOLUTIONS` 的"自定义"键
+- 新增 `ben_nodes_config.json.example` 模板；`ben_nodes_config.json` 加入 `.gitignore`
+
+## 当前节点统计
+
+- **总节点数**: 22 个（控制 7 / 数据 5 / 文本 5 / 图像 4 / 文件 1，AI 类已移除）
+- **测试**: `tests/test_all_nodes.py`（注册）+ `tests/test_nodes_behavior.py`（功能 28 用例）

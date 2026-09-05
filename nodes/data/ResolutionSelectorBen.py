@@ -4,6 +4,7 @@
 """
 
 from ...utils.base.base_node import BaseResolutionNode
+from ...utils.i18n import t
 
 class ResolutionSelectorBen(BaseResolutionNode):
     """分辨率选择器节点"""
@@ -35,7 +36,7 @@ class ResolutionSelectorBen(BaseResolutionNode):
     RETURN_TYPES = ("INT", "INT", "STRING")
     RETURN_NAMES = ("width", "height", "resolution_text")
     FUNCTION = "calculate"
-    CATEGORY = "BenNodes/数据"
+    CATEGORY = f"BenNodes/{t('common_cat_data')}"
     OUTPUT_NODE = True
 
     def calculate(self, resolution, aspect_ratio, width=1280, height=720, unique_id=None):

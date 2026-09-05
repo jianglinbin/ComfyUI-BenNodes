@@ -5,8 +5,11 @@ from PIL import Image
 from ...utils.base.base_node import BaseResolutionNode
 import concurrent.futures
 import multiprocessing
-from typing import List, Tuple
+import logging
 from ...utils.image.image_utils import process_image_for_comfy
+from ...utils.i18n import t
+
+logger = logging.getLogger(__name__)
 
 class ImageScalerBen(BaseResolutionNode):
     # 使用继承自BaseResolutionNode的SCALE_MODES常量
@@ -23,7 +26,7 @@ class ImageScalerBen(BaseResolutionNode):
                 "height": ("INT", {"default": 720, "min": 1, "max": 8192}),
                 "feathering": ("INT", {"default": 40, "min": 0, "max": 200}),
                 "upscale_method": (s.UPSCALE_METHODS, {"default": "bicubic"}),
-                "pad_color": ("STRING", {"default": "127,127,127", "placeholder": "R,G,B (例如: 255,0,0)"}),
+                "pad_color": ("STRING", {"default": "127,127,127", "placeholder": t("image_scaler_pad_color_placeholder")}),
             },
             "hidden": {
                 "node_id": "UNIQUE_ID",
@@ -33,7 +36,7 @@ class ImageScalerBen(BaseResolutionNode):
     RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT")
     RETURN_NAMES = ("IMAGE", "MASK", "width", "height")
     FUNCTION = "process"
-    CATEGORY = "BenNodes/图像"
+    CATEGORY = f"BenNodes/{t('common_cat_image')}"
     OUTPUT_NODE = True
 
     # 继承基类的calculate_dimensions 方法，无需重写
@@ -46,7 +49,7 @@ class ImageScalerBen(BaseResolutionNode):
             )
             return img_tensor[0], mask_tensor[0], fw, fh
         except Exception as e:
-            print(f"Error processing image in scaler: {e}")
+            logger.error("Error processing image in scaler: %s", e)
             return torch.zeros((target_height, target_width, 3)), torch.zeros((target_height, target_width)), target_width, target_height
 
     def process(self, image, resolution, aspect_ratio, width, height, resize_mode, position, feathering, upscale_method="bicubic", node_id=None, pad_color="127,127,127"):

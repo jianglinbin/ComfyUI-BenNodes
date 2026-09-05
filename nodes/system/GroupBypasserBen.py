@@ -5,25 +5,27 @@ Group Bypasser Node
 这是一个虚拟节点，主要逻辑在前端 JavaScript 实现
 """
 
+from ...utils.i18n import t
+
 class GroupBypasserBen:
     """
     Group Bypasser 节点
-    
+
     特性：
     - COMBO选择组名（自动更新组列表）
     - BOOL开关控制组的激活/忽略状态
     - 开启=激活组，关闭=忽略组
     """
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {},
         }
-    
+
     RETURN_TYPES = ()
     FUNCTION = "execute"
-    CATEGORY = "BenNodes/控制"
+    CATEGORY = f"BenNodes/{t('common_cat_control')}"
     OUTPUT_NODE = False
     
     def execute(self):
@@ -33,13 +35,3 @@ class GroupBypasserBen:
         """
         return ()
 
-
-# 节点类映射
-NODE_CLASS_MAPPINGS = {
-    "GroupBypasserBen": GroupBypasserBen
-}
-
-# 节点显示名称映射
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "GroupBypasserBen": "忽略组"
-}

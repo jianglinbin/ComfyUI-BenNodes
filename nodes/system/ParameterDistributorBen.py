@@ -5,23 +5,18 @@ Parameter Distributor Node
 每个输出对应一个独立的 widget 值
 """
 
+import logging
 
-class AnyType(str):
-    """特殊类型，允许任意类型的连接"""
-    def __eq__(self, _) -> bool:
-        return True
-    
-    def __ne__(self, __value: object) -> bool:
-        return False
+from ...utils.constants.constants import any_type
+from ...utils.i18n import t
 
-
-any_type = AnyType("*")
+logger = logging.getLogger(__name__)
 
 
 class ParameterDistributorBen:
     """
     Parameter Distributor 节点 / 参数分发器
-    
+
     特性：
     - 动态输出槽位自动管理
     - 输出被连接后自动添加新输出
@@ -29,7 +24,7 @@ class ParameterDistributorBen:
     - 每个输出独立配置
     - 参数锁定功能
     """
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -39,58 +34,43 @@ class ParameterDistributorBen:
                 "extra_pnginfo": "EXTRA_PNGINFO",
             }
         }
-    
+
     # 定义足够多的返回类型以支持多个输出
     RETURN_TYPES = tuple([any_type] * 20)  # 支持最多 20 个输出
     FUNCTION = "execute"
-    CATEGORY = "BenNodes/控制"
+    CATEGORY = f"BenNodes/{t('common_cat_control')}"
     OUTPUT_NODE = False
-    
+
     def execute(self, unique_id=None, extra_pnginfo=None):
         """
         从 workflow 中读取 widget 值并返回
         每个 widget 对应一个输出
         """
-        print(f"[ParameterDistributor] unique_id: {unique_id}")
-        
+        logger.debug("unique_id: %s", unique_id)
+
         if extra_pnginfo and "workflow" in extra_pnginfo:
             workflow = extra_pnginfo["workflow"]
             nodes = workflow.get("nodes", [])
-            
+
             # 找到当前节点
             for node in nodes:
                 if str(node.get("id")) == str(unique_id):
                     widgets_values = node.get("widgets_values", [])
                     outputs = node.get("outputs", [])
-                    
-                    print(f"[ParameterDistributor] widgets_values: {widgets_values}")
-                    print(f"[ParameterDistributor] outputs count: {len(outputs)}")
-                    
+
+                    logger.debug("widgets_values: %s, outputs count: %s", widgets_values, len(outputs))
+
                     # 返回所有 widget 的值，填充到 20 个输出
                     # 注意：最后一个 widget 是锁定开关，前端已经过滤掉了
                     if widgets_values:
-                        # 创建结果元组，用 None 填充未使用的输出
-                        result = list(widgets_values)
-                        # 填充到 20 个
+                        # 截断到 20 个防止输出超长，用 None 填充未使用的输出
+                        result = list(widgets_values[:20])
                         while len(result) < 20:
                             result.append(None)
-                        result = tuple(result)
-                        
-                        print(f"[ParameterDistributor] Returning {len(widgets_values)} values (padded to 20)")
-                        return result
+                        logger.debug("Returning %s values (padded to 20)", len(widgets_values))
+                        return tuple(result)
                     break
-        
+
         # 如果没有找到值，返回 20 个 None
-        print("[ParameterDistributor] No widget values found, returning 20 Nones")
+        logger.debug("No widget values found, returning 20 Nones")
         return tuple([None] * 20)
-
-
-# 节点类映射
-NODE_CLASS_MAPPINGS = {
-    "ParameterDistributorBen": ParameterDistributorBen
-}
-
-# 节点显示名称映射
-NODE_DISPLAY_NAME_MAPPINGS = {
-    "ParameterDistributorBen": "参数分发器"
-}

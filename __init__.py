@@ -5,6 +5,8 @@ ComfyUI-BenNodes: 自定义节点包
 
 import os
 
+from .utils.i18n import t
+
 from .nodes.data.ResolutionSelectorBen import ResolutionSelectorBen
 from .nodes.text.PromptLineBen import PromptLineBen
 from .nodes.image.ImageScalerBen import ImageScalerBen
@@ -19,8 +21,6 @@ from .nodes.data.AdvancedListIndexSelectorBen import AdvancedListIndexSelectorBe
 from .nodes.data.TypeConverterBen import TypeConverterBen
 from .nodes.text.TextProcessorBen import TextProcessorBen
 from .nodes.text.TextJoinerBen import TextJoinBen
-from .nodes.ai.GLMNodeBen import GLMNodeBen
-from .nodes.ai.GLMConfigNodeBen import GLMConfigNodeBen
 from .nodes.file.FileUploaderBen import FileUploaderBen
 
 from .nodes.system.MemoryCleanupBen import MemoryCleanupDynamicBen
@@ -40,15 +40,13 @@ NODE_CLASS_MAPPINGS = {
     "ImageBatchLoaderBen": ImageLoaderBatchBen,
     "ImageLoaderBen": LoadImageBen,
     "TextSaverBen": SaveTextBen,
-    "TextSplitterBen": TextSplitBen, 
+    "TextSplitterBen": TextSplitBen,
     "JSONParserBen": JSONParserBen,
     "ListIndexSelectorBen": ListIndexSelectorBen,
     "AdvancedListIndexSelectorBen": AdvancedListIndexSelectorBen,
     "TypeConverterBen": TypeConverterBen,
     "TextProcessorBen": TextProcessorBen,
     "TextJoinerBen": TextJoinBen,
-    "GLMNodeBen": GLMNodeBen,
-    "GLMConfigNodeBen": GLMConfigNodeBen,
     "FileUploaderBen": FileUploaderBen,
     "MemoryCleanupBen": MemoryCleanupDynamicBen,
     "NonNullSwitchBen": NonNullSwitchBen,
@@ -59,32 +57,30 @@ NODE_CLASS_MAPPINGS = {
     "ParameterDistributorBen": ParameterDistributorBen,
 }
 
-# 节点显示名称映射
+# 节点显示名称映射（随 i18n 语言切换）
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ResolutionSelectorBen": "选择分辨率",
-    "PromptLineBen": "提示词行处理器",
-    "ImageScalerBen": "图像缩放",
-    "EmptyLatentImageBen": "空Latent",
-    "ImageBatchLoaderBen": "加载图片批次",
-    "ImageLoaderBen": "加载图片",
-    "TextSaverBen": "保存文本",
-    "TextSplitterBen": "文本拆分",
-    "JSONParserBen": "JSON解析器",
-    "ListIndexSelectorBen": "列表索引选择器",
-    "AdvancedListIndexSelectorBen": "索引选择(高级)",
-    "TypeConverterBen": "类型转换器",
-    "TextProcessorBen": "文本处理器",
-    "TextJoinerBen": "文本连接",
-    "GLMNodeBen": "GLM多模态分析",
-    "GLMConfigNodeBen": "GLM配置",
-    "FileUploaderBen": "文件选择器",
-    "MemoryCleanupBen": "释放显存内存",
-    "NonNullSwitchBen": "非空切换",
-    "NodeBypasserBen": "忽略节点",
-    "AdvancedNodeBypasserBen": "忽略节点(高级)",
-    "AdvancedGroupBypasserBen": "忽略组(高级)",
-    "GroupBypasserBen": "忽略组",
-    "ParameterDistributorBen": "参数分发器",
+    "ResolutionSelectorBen": t("display_ResolutionSelectorBen"),
+    "PromptLineBen": t("display_PromptLineBen"),
+    "ImageScalerBen": t("display_ImageScalerBen"),
+    "EmptyLatentImageBen": t("display_EmptyLatentImageBen"),
+    "ImageBatchLoaderBen": t("display_ImageBatchLoaderBen"),
+    "ImageLoaderBen": t("display_ImageLoaderBen"),
+    "TextSaverBen": t("display_TextSaverBen"),
+    "TextSplitterBen": t("display_TextSplitterBen"),
+    "JSONParserBen": t("display_JSONParserBen"),
+    "ListIndexSelectorBen": t("display_ListIndexSelectorBen"),
+    "AdvancedListIndexSelectorBen": t("display_AdvancedListIndexSelectorBen"),
+    "TypeConverterBen": t("display_TypeConverterBen"),
+    "TextProcessorBen": t("display_TextProcessorBen"),
+    "TextJoinerBen": t("display_TextJoinerBen"),
+    "FileUploaderBen": t("display_FileUploaderBen"),
+    "MemoryCleanupBen": t("display_MemoryCleanupBen"),
+    "NonNullSwitchBen": t("display_NonNullSwitchBen"),
+    "NodeBypasserBen": t("display_NodeBypasserBen"),
+    "AdvancedNodeBypasserBen": t("display_AdvancedNodeBypasserBen"),
+    "AdvancedGroupBypasserBen": t("display_AdvancedGroupBypasserBen"),
+    "GroupBypasserBen": t("display_GroupBypasserBen"),
+    "ParameterDistributorBen": t("display_ParameterDistributorBen"),
 }
 
 WEB_DIRECTORY = "./js"

@@ -61,3 +61,5 @@ htmlcov/
 # Local development files
 sync_and_push_local.bat
 rename_all_to_ben.bat
+# BenNodes i18n config (local)
+ben_nodes_config.json

@@ -1,5 +1,6 @@
 import torch
 from ...utils.base.base_node import BaseResolutionNode
+from ...utils.i18n import t
 
 class EmptyLatentImageBen(BaseResolutionNode):
     def __init__(self):
@@ -21,11 +22,11 @@ class EmptyLatentImageBen(BaseResolutionNode):
         }
     
     RETURN_TYPES = ("LATENT",)
-    OUTPUT_TOOLTIPS = ("A batch of empty latent images to be denoised via sampling.",)
+    OUTPUT_TOOLTIPS = (t("empty_latent_output_tooltip"),)
     FUNCTION = "generate"
 
-    CATEGORY = "BenNodes/图像"
-    DESCRIPTION = "Create a new batch of empty latent images with preset resolutions and aspect ratios."
+    CATEGORY = f"BenNodes/{t('common_cat_image')}"
+    DESCRIPTION = t("empty_latent_description")
 
     # 继承基类的calculate_dimensions 方法，无需重写
 

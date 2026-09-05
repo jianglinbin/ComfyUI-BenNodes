@@ -1,12 +1,13 @@
 import os
 import torch
 import numpy as np
-from PIL import Image, ImageOps, ImageSequence
+from PIL import Image
 import hashlib
 import folder_paths
 import node_helpers
 from ...utils.base.base_node import BaseResolutionNode
 from ...utils.image.image_utils import process_image_for_comfy
+from ...utils.i18n import t
 
 class LoadImageBen(BaseResolutionNode):
     @classmethod
@@ -28,11 +29,13 @@ class LoadImageBen(BaseResolutionNode):
             }
         }
 
-    CATEGORY = "BenNodes/图像"
-    DESCRIPTION = "加载单张图片，支持各种常见图片格式"
+    CATEGORY = f"BenNodes/{t('common_cat_image')}"
+    DESCRIPTION = t("image_loader_description")
 
     RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT", "STRING")
-    RETURN_NAMES = ("图片", "遮罩", "宽度", "高度", "文件名")
+    RETURN_NAMES = (t("image_common_return_image"), t("image_common_return_mask"),
+                    t("image_common_return_width"), t("image_common_return_height"),
+                    t("image_common_return_filename"))
     FUNCTION = "load_image"
     
     def load_image(self, image, resize_mode, position, resolution, aspect_ratio, width, height, feathering=0, upscale_method="bicubic"):
@@ -76,6 +79,6 @@ class LoadImageBen(BaseResolutionNode):
     @classmethod
     def VALIDATE_INPUTS(s, image, resize_mode=None, position=None, resolution=None, aspect_ratio=None, width=None, height=None, feathering=None, upscale_method=None):
         if not folder_paths.exists_annotated_filepath(image):
-            return "Invalid image file: {}".format(image)
+            return t("image_loader_invalid_file").format(image)
 
         return True

@@ -1,6 +1,7 @@
 import { app } from "../../scripts/app.js";
-import { RESOLUTIONS, ASPECT_RATIOS, getWidget, hideWidget, showWidget, calcDims, updateResolutionControls } from "./shared.js";
+import { getWidget, updateScalerWidgets, wrapWidgetCallbacks, applyFixedComputeSize } from "./shared.js";
 
+import { t } from "./i18n.js";
 app.registerExtension({
     name: "ben.ImageBatchLoader",
     async beforeRegisterNodeDef(nodeType, nodeData) {
@@ -13,7 +14,7 @@ app.registerExtension({
             const node = this;
 
             // 添加上传文件夹按钮
-            const uploadButton = node.addWidget("button", "上传文件夹", "upload_folder", () => {
+            const uploadButton = node.addWidget("button", t("upload_folder"), "upload_folder", () => {
                 const input = document.createElement("input");
                 input.type = "file";
                 input.webkitdirectory = true;
@@ -30,7 +31,7 @@ app.registerExtension({
                     }
 
                     const originalLabel = uploadButton.label;
-                    uploadButton.label = "上传中 0/" + files.length + "...";
+                    uploadButton.label = t("uploading_progress", 0, files.length);
                     node.setDirtyCanvas(true);
 
                     try {
@@ -49,7 +50,7 @@ app.registerExtension({
                             });
 
                             uploadedCount++;
-                            uploadButton.label = `上传中 ${uploadedCount}/${files.length}...`;
+                            uploadButton.label = t("uploading_progress", uploadedCount, files.length);
                             node.setDirtyCanvas(true);
 
                             await new Promise(r => setTimeout(r, 50));
@@ -68,7 +69,7 @@ app.registerExtension({
                         node.setDirtyCanvas(true);
 
                     } catch (error) {
-                        alert("上传失败: " + error);
+                        alert(t("upload_failed_with_error", error));
                     } finally {
                         uploadButton.label = originalLabel;
                         node.setDirtyCanvas(true);
@@ -80,104 +81,15 @@ app.registerExtension({
                 document.body.removeChild(input);
             });
 
-            const update = () => {
-                try {
-                    const folderW = getWidget(node, "folder_path");
-                    const resizeModeW = getWidget(node, "resize_mode");
-
-                    if (!resizeModeW) return;
-
-                    const resW = getWidget(node, "resolution");
-                    const ratioW = getWidget(node, "aspect_ratio");
-                    const wW = getWidget(node, "width");
-                    const hW = getWidget(node, "height");
-                    const featherW = getWidget(node, "feathering");
-                    const upscaleMethodW = getWidget(node, "upscale_method");
-                    const positionW = getWidget(node, "position");
-
-                    if (resW) {
-                        const resizeMode = resizeModeW.value;
-                        const isCustom = resW.value === "自定义";
-
-                        hideWidget(resW);
-                        hideWidget(ratioW);
-                        hideWidget(wW);
-                        hideWidget(hW);
-                        hideWidget(featherW);
-                        hideWidget(upscaleMethodW);
-                        hideWidget(positionW);
-
-                        if (resizeMode !== "none") {
-                            showWidget(resW);
-                            if (resizeMode !== "contain" && ratioW) showWidget(ratioW);
-                            if (isCustom && wW && hW) {
-                                showWidget(wW);
-                                showWidget(hW);
-                                if (ratioW) hideWidget(ratioW);
-                            }
-                        }
-
-                        if (resizeMode === "pad" && featherW) showWidget(featherW);
-
-                        if (["contain", "crop", "pad"].includes(resizeMode) && upscaleMethodW) {
-                            showWidget(upscaleMethodW);
-                        }
-
-                        if (["crop", "pad"].includes(resizeMode) && positionW) {
-                            showWidget(positionW);
-                        }
-
-                        let d = { width: 1080, height: 720 };
-                        if (resizeMode !== "none") {
-                            d = calcDims(resW.value, ratioW?.value || "16:9", wW?.value || 1080, hW?.value || 720);
-                        }
-
-                        if (!isCustom && wW && hW) {
-                            wW.value = d.width;
-                            hW.value = d.height;
-                        }
-                    }
-
-                    node.size = node.computeSize();
-                    node.setDirtyCanvas(true);
-                } catch (e) {
-                    console.error("[ImageBatchLoader] update error:", e);
-                }
-            };
+            const update = () => updateScalerWidgets(node);
 
             // 批量绑定回调
-            ["folder_path", "resize_mode", "resolution", "aspect_ratio"].forEach(n => {
-                const w = getWidget(node, n);
-                if (w) {
-                    const orig = w.callback;
-                    w.callback = v => {
-                        if (orig) orig.call(w, v);
-                        update();
-                    };
-                }
-            });
+            wrapWidgetCallbacks(node, ["folder_path", "resize_mode", "resolution", "aspect_ratio"], update);
 
             // 初始化
             setTimeout(update, 100);
         };
 
-        const origComputeSize = nodeType.prototype.computeSize;
-        nodeType.prototype.computeSize = function () {
-            const HEADER_HEIGHT = 40;
-            const WIDGET_HEIGHT = 32;
-            const PADDING = 10;
-            const BOTTOM_SPACE = 10;
-
-            const visibleWidgets = (this.widgets || []).filter(w => !w.hidden && w != null);
-            const wc = visibleWidgets.length;
-
-            const widgetsAreaHeight = HEADER_HEIGHT + wc * WIDGET_HEIGHT + PADDING;
-            const totalHeight = widgetsAreaHeight + BOTTOM_SPACE;
-
-            const origSize = origComputeSize ? origComputeSize.apply(this, arguments) : [this.size ? this.size[0] : 200, totalHeight];
-            return [origSize[0], totalHeight];
-        };
-
-
+        applyFixedComputeSize(nodeType);
     }
 });

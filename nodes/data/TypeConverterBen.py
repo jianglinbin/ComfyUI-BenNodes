@@ -6,22 +6,15 @@
 import json
 import logging
 
-logging.basicConfig(level=logging.WARNING)
+from ...utils.constants.constants import any_type
+from ...utils.i18n import t
+
 logger = logging.getLogger(__name__)
-
-# 定义any_type，类似comfyui-easy-use的实现
-class AlwaysEqualProxy(str):
-    def __eq__(self, _):
-        return True
-    def __ne__(self, _):
-        return False
-
-any_type = AlwaysEqualProxy("*")
 
 
 class TypeConverterBen:
     """类型转换节点"""
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         """定义输入参数"""
@@ -30,38 +23,38 @@ class TypeConverterBen:
                 "*": (any_type,),  # 使用*作为参数名，类似convertAnything
                 "target_type": ([
                     "STRING", "LIST<STRING>",
-                    "INT", "LIST<INT>", 
-                    "FLOAT", "LIST<FLOAT>", 
+                    "INT", "LIST<INT>",
+                    "FLOAT", "LIST<FLOAT>",
                     "BOOLEAN", "LIST<BOOLEAN>"
                 ], {
                     "default": "STRING",
-                    "tooltip": "目标数据类型（选择LIST类型会将输入转换为列表）"
+                    "tooltip": t("type_converter_target_type_tooltip")
                 }),
             }
         }
-    
+
     RETURN_TYPES = (any_type,)
     RETURN_NAMES = ("output",)
     OUTPUT_NODE = False
     FUNCTION = "convert"
-    CATEGORY = "BenNodes/数据"
-    
+    CATEGORY = f"BenNodes/{t('common_cat_data')}"
+
     def convert(self, *args, **kwargs):
         """执行类型转换，类似convertAnything但支持更多类型和列表转换"""
         input_data = kwargs['*']
         target_type = kwargs['target_type']
-        
+
         try:
-            print(f"[TypeConverter] 输入数据: {input_data}, 类型: {type(input_data).__name__}")
-            print(f"[TypeConverter] 目标类型: {target_type}")
-            
+            logger.debug("输入数据: %s, 类型: %s", input_data, type(input_data).__name__)
+            logger.debug("目标类型: %s", target_type)
+
             # 检查输入是否为列表
             is_input_list = isinstance(input_data, (list, tuple))
-            
+
             # 判断目标类型是否为列表类型
             is_target_list = target_type.startswith("LIST<")
             base_type = target_type.replace("LIST<", "").replace(">", "") if is_target_list else target_type
-            
+
             # 核心逻辑：根据目标类型决定输出
             if is_target_list:
                 # 目标是列表类型
@@ -83,16 +76,15 @@ class TypeConverterBen:
                 else:
                     # 输入是单值，转换为单值
                     result = self._convert_single(input_data, base_type)
-            
-            print(f"[TypeConverter] 转换结果: {result}, 类型: {type(result).__name__}")
+
+            logger.debug("转换结果: %s, 类型: %s", result, type(result).__name__)
             return (result,)
-            
+
         except Exception as e:
-            error_msg = f"类型转换失败: {str(e)}"
+            error_msg = t("type_converter_failed").format(str(e))
             logger.error(error_msg)
-            print(f"[TypeConverter错误] {error_msg}")
             return (error_msg,)
-    
+
     def _convert_single(self, data, target_type):
         """转换单个数据到指定类型"""
         if target_type == "STRING":
@@ -105,7 +97,7 @@ class TypeConverterBen:
             return self._to_boolean_single(data)
         else:
             return data
-    
+
     def _get_default_value(self, target_type):
         """获取类型的默认值"""
         if target_type == "STRING":
@@ -118,7 +110,7 @@ class TypeConverterBen:
             return False
         else:
             return None
-    
+
     def _to_string_single(self, data):
         """转换单个元素为字符串(不处理列表)"""
         if isinstance(data, str):
@@ -131,7 +123,7 @@ class TypeConverterBen:
             return json.dumps(data, ensure_ascii=False)
         else:
             return str(data)
-    
+
     def _to_int_single(self, data):
         """转换单个元素为整数(不处理列表)"""
         if isinstance(data, int):
@@ -154,10 +146,10 @@ class TypeConverterBen:
             try:
                 return int(float(data))  # 先转float再转int，支持"3.14"这样的字符串
             except ValueError:
-                raise ValueError(f"无法将'{data}' 转换为整数")
+                raise ValueError(t("type_converter_invalid_int_value").format(data))
         else:
-            raise ValueError(f"无法将类型{type(data).__name__} 转换为整数")
-    
+            raise ValueError(t("type_converter_invalid_int_type").format(type(data).__name__))
+
     def _to_float_single(self, data):
         """转换单个元素为浮点数(不处理列表)"""
         if isinstance(data, float):
@@ -180,10 +172,10 @@ class TypeConverterBen:
             try:
                 return float(data)
             except ValueError:
-                raise ValueError(f"无法将'{data}' 转换为浮点数")
+                raise ValueError(t("type_converter_invalid_float_value").format(data))
         else:
-            raise ValueError(f"无法将类型{type(data).__name__} 转换为浮点数")
-    
+            raise ValueError(t("type_converter_invalid_float_type").format(type(data).__name__))
+
     def _to_boolean_single(self, data):
         """转换单个元素为布尔值(不处理列表)"""
         if isinstance(data, bool):
@@ -203,35 +195,3 @@ class TypeConverterBen:
             return False
         else:
             return bool(data)
-    
-    def _to_list(self, data):
-        """转换为列表"""
-        if isinstance(data, list):
-            return data
-        elif isinstance(data, tuple):
-            return list(data)
-        elif isinstance(data, str):
-            # 尝试解析JSON字符串
-            data = data.strip()
-            if not data:
-                return []
-            if data.startswith('[') and data.endswith(']'):
-                try:
-                    return json.loads(data)
-                except json.JSONDecodeError:
-                    pass
-            # 如果包含逗号，按逗号分隔
-            if ',' in data:
-                return [item.strip() for item in data.split(',')]
-            # 否则返回单元素列表
-            return [data]
-        elif isinstance(data, (int, float, bool)):
-            return [data]
-        elif data is None:
-            return []
-        else:
-            # 尝试转换为列表
-            try:
-                return list(data)
-            except:
-                return [data]

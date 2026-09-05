@@ -214,55 +214,13 @@ class ImageScaleUtils:
         if feathering <= 0:
             return mask
         
-        # 找到黑色区域的边缘 (ComfyUI masks are typically 0 for masked, 1 for unmasked? wait, looking at implementation above:
-        # resize_pad: mask.paste(255, image_area). So 255 is the image, 0 is background.
-        
-        # 创建一个临时蒙版
-        temp_mask = Image.fromarray(mask_array)
-        
-        # 找到黑色区域的边缘 (Not exactly, we want to soften the edge between 0 and 255)
-        # Check implementation in constants.py... it uses distance_transform_edt on 'mask_array == 0' (black area)
-        
-        # 创建距离变换
+        # 找到黑色区域的边缘
+        # 遮罩语义（见上方 resize_pad）：255=图像区，0=补边区
+        # 羽化：在补边区内做距离变换，使图像边缘从 255 渐变到 0（软边）
         if ImageScaleUtils.HAS_SCIPY:
-            # 计算从黑色区域（图像外部）边缘到内部的距离
-            # Note: in previous implementation it was 'mask_array == 0'. 
-            # If 255 is image, 0 is pad.
-            # distance_transform_edt computes distance to nearest non-zero (True) pixel.
-            # So if we want distance inside the black area (0), we invert logic?
-            # Previous logic:
-            # image_mask = mask_array == 0 # True for black/background
-            # distance = distance_transform_edt(image_mask) # Distance from non-black (white) into the black?
-            # Wait, distance_transform_edt calculates distance TO the nearest zero pixel for non-zero pixels. 
-            # If input is boolean, it treats False as 0.
-            # So if image_mask is True for 0s. Then distance is calculated for True pixels (0s) to the nearest False (255s).
-            # So this gives distance into the padding area.
-            
-            image_mask = mask_array == 0  
-            distance = ImageScaleUtils.distance_transform_edt(image_mask)
-            
-            # This creates a gradient INTO the padding area.
-            # feathering = np.clip(distance, 0, feathering)
-            # feathered = 255 - (feathered / feathering) * 255 
-            # If distance is 0 (at edge), 255. If distance is feathering, 0.
-            # result = np.where(mask_array == 0, feathered, 255)
-            # This fades the padding area from 255 (at edge) to 0 (deep in padding).
-            # But wait, padding area is already 0.
-            # So this makes the padding area near the edge white? That expands the mask?
-            # Feathering usually softens the opaque area into transparent.
-            # If mask is 255 (keep) and 0 (discard).
-            # We want the edge of 255 to fade to 0.
-            
-            # Let's trust the previous implementation for now, it seemed to be "valid" in the user's codebase.
-            # Reviewing carefully: 
-            # result_array = np.where(mask_array == 0, feathered, 255)
-            # If mask_array is 0 (padding), it gets 'feathered' values (255 -> 0).
-            # If mask_array is 255 (image), it stays 255.
-            # So this blurs the edge INTO the black region.
-            
             image_mask = mask_array == 0
             distance = ImageScaleUtils.distance_transform_edt(image_mask)
-            
+
             feathered = np.clip(distance, 0, feathering)
             feathered = 255 - (feathered / feathering) * 255
             feathered = feathered.astype(np.uint8)
@@ -338,96 +296,9 @@ def process_image_for_comfy(pil_image, resize_mode, target_width, target_height,
             alpha_img = alpha_img.resize(processed_img.size, Image.Resampling.BICUBIC)
             alpha_resized = np.array(alpha_img).astype(np.float32) / 255.0
             mask_np = np.minimum(mask_np, 1.0 - alpha_resized) # Use the image's alpha as the mask (1.0 = opaque)
-            # Wait, ComfyUI mask: 0 is black (masked?), 1 is white (visible/unmasked?).
-            # In ComfyUI: 
-            #   MASK is usually 0.0 to 1.0.
-            #   Latent mask: 1.0 means masked (latent will not change?), 0.0 means unmasked (latent will change).
-            #   BUT for Image mask:
-            #   LoadImage node returns a mask from alpha channel.
-            #   If we look at LoadImageSingleBen.py original code:
-            #   mask_np = np.minimum(mask_np, 1.0 - alpha_resized) 
-            #   This implies 0.0 is kept, 1.0 is masked out?
-            #   Or inverted?
-            #   Standard ComfyUI LoadImage: 
-            #      mask = 1. - np.array(i.getchannel('A')).astype(np.float32) / 255.0
-            #      So 1.0 (opaque in PNG) becomes 0.0 (unmasked in Comfy).
-            #      0.0 (transparent in PNG) becomes 1.0 (masked in Comfy).
-            #   My created mask (ImageScaleUtils) has 255 (white, 1.0) for image area, 0 (black, 0.0) for pad.
-            #   If the original code was: `mask_np = np.minimum(mask_np, 1.0 - alpha_resized)`
-            #   And mask_np was 255 (1.0) for image.
-            #   If alpha is 1.0 (opaque), 1.0-alpha = 0.0. min(1.0, 0.0) = 0.0. 
-            #   So opaque pixels become 0.0 (unmasked).
-            #   If result mask is 0.0 (padding), min(0.0, ...) = 0.0.
-            #   Wait. Padding area should be masked (1.0)? Or unmasked (0.0)?
-            #   Usually inpainting: mask 1.0 is area to inpaint (change), 0.0 is keep.
-            #   Or mask 1.0 is "masked out, don't touch", 0.0 is "active".
-            #   Let's check `LoadImage` standard behavior.
-            #   "MASK": the alpha channel. 
-            #   If I look at `LoadImageSingleBen.py` line 93:
-            #   mask_np = np.minimum(mask_np, 1.0 - alpha_resized)
-            #   Original mask (from ScaleUtils) was: Image=255(1.0), Pad=0(0.0).
-            #   This seems dangerous if 0 means "keep/unmasked" and 1 means "mask".
-            #   If Pad is 0 (unmasked), then padding is active?
-            #   Usually padding area is black (0).
-            #   If we want to support "Paste back" workflows, we usually want the SUBJECT to be unmasked?
-            #   Let's stick to EXACT behavior of previous code to NOT break things.
-            #   Prev code: mask_np = 255 (image), 0 (pad).
-            #   Prev code alpha logic: mask_np = np.minimum(mask_np, 1.0 - alpha_resized).
-            #   If image area (1.0) and opaque (alpha=1.0 -> 1-a=0.0) => min(1.0, 0.0) = 0.0.
-            #   If image area (1.0) and transparent (alpha=0.0 -> 1-a=1.0) => min(1.0, 1.0) = 1.0.
-            #   If pad area (0.0) -> min(0.0, ...) = 0.0.
-            #   Result: Opaque pixels = 0.0. Transparent pixels = 1.0. Padding = 0.0.
-            #   This means Padding is treated same as Opaque Subject??
-            #   This seems odd for padding, but if that was the logic, I must preserve it.
-            #   Wait, `mask` in `ImageScaleUtils` returns:
-            #     pad: mask.paste(255, ...). Image area is 255. Background is 0.
-            #     so mask_np: Image=1.0, Pad=0.0.
-            #   If I use `np.minimum`, then Pad (0.0) forces the result to 0.0.
-            #   So Pad area becomes 0.0 (Active).
-            #   So in this node, 0.0 = Content/Visible/Active.
-            #   So Pad area is "Content".
-            #   This logic seems to imply the mask comes out as: 0.0 where there is content (or padding), 1.0 where there is transparency.
-            
-            #   Let's re-read `LoadImageSingleBen.py`.
-            #   Line 60: mask = Image.new("L", img.size, 255) (For 'none' mode) -> All white (1.0).
-            #   If alpha channel present: 
-            #   mask_np = np.minimum(mask_np, 1.0 - alpha_resized)
-            #   min(1.0, 1.0 - alpha).
-            #   If alpha=1 (opaque), res=0. (Active)
-            #   If alpha=0 (transp), res=1. (Masked)
-            #   So 0=Content, 1=Masked/Transparent.
-            
-            #   Now look at `resize_pad` in `constants.py`/`utils.py`.
-            #   mask = Image.new("L", ... 0). paste(255, ...).
-            #   So Pad=0 (Active?), Image=255 (Masked?).
-            #   This contradicts the 'none' mode logic (Image=255).
-            #   If `none`: Image=255. Alpha logic makes opaque -> 0.
-            #   If `pad`: Pad=0. Image=255.
-            #   If we apply alpha logic to `pad` result:
-            #      Image area (255=1.0): behaves like `none`. Opaque->0, Trans->1.
-            #      Pad area (0=0.0): min(0.0, ...) = 0.0. 
-            #   So Pad area becomes 0.0 (Active).
-            #   So in this node, 0.0 = Content/Visible/Active.
-            #   So Pad area is "Content".
-            #   This mimics ComfyUI LoadImage which is generally used for img2img where you mask OUT what you want to change, or IN what you want to keep?
-            #   Actually LoadImage mask output is often used for "Mask".
-            #   In ComfyUI Inpainting: 1.0 (white) is "inpainted area". 0.0 (black) is "context".
-            #   If LoadImage returns 1.0 for transparent background. Then it suggests "This part is missing, please fill it/inpaint it".
-            #   If Pad area is 0.0, it suggests "This part is real content, keep it".
-            #   BUT Pad area is black.
-            #   Maybe the user WANTS to inpaint the padding?
-            #   If so, Pad should be 1.0?
-            
-            #   Let's check `LoadImageSingleBen.py` again.
-            #   It processes alpha.
-            #   But what if `resize_mode` is 'pad'? 
-            #   It calls `apply_scale_mode_with_mask`. Returns mask where Pad=0, Image=255.
-            #   Then applies alpha logic.
-            #   So Pad is definitely 0.
-            
-            #   I will preserve this exact logic.
-            
-            mask_np = np.minimum(mask_np, 1.0 - alpha_resized)
+            # 遮罩语义：0.0 = 可见区，1.0 = 被遮蔽/透明区（与 ComfyUI LoadImage 的 alpha 行为一致）
+            # 图像不透明处 alpha 贡献 1.0-1.0=0.0（可见）；透明处贡献 1.0-0.0=1.0（遮蔽）
+            # pad 模式补边区在本函数中为 1.0（被遮蔽），为兼容历史实现有意保留
 
         elif str(original_image.mode).strip() == 'P' and 'transparency' in original_image.info:
              # Handle palette transparency
@@ -438,15 +309,9 @@ def process_image_for_comfy(pil_image, resize_mode, target_width, target_height,
              alpha_resized = np.array(alpha_img).astype(np.float32) / 255.0
              mask_np = np.minimum(mask_np, 1.0 - alpha_resized)
 
-        # Convert to tensor (HWC -> CHW? No, Comfy is BHWC for images usually? Wait.)
-        # ImageLoaderSingleBen: 
-        # img_tensor = torch.from_numpy(img_np)[None,]  (Add batch dim? shape: 1, H, W, C)
-        # ComfyUI image format is [Batch, Height, Width, Channel]. 
-        # numpy img_np is [Height, Width, Channel] (from PIL)
-        # So [None,] adds batch dim.
-        
+        # 转为 ComfyUI 张量格式：图像 [B, H, W, C]，遮罩 [B, H, W]
         img_tensor = torch.from_numpy(img_np)[None,]
-        mask_tensor = torch.from_numpy(mask_np).unsqueeze(0) # Add batch dim to mask? [1, H, W]
+        mask_tensor = torch.from_numpy(mask_np).unsqueeze(0)
 
         output_images.append(img_tensor)
         output_masks.append(mask_tensor)
@@ -457,20 +322,5 @@ def process_image_for_comfy(pil_image, resize_mode, target_width, target_height,
     else:
         final_image = output_images[0]
         final_mask = output_masks[0]
-        
-    return final_image, final_mask, w, h
 
-def tensor_to_base64(image_tensor, max_size_mb=4.0, max_px=6000):
-    """
-    Convert a ComfyUI image tensor to a base64 string with size and resolution constraints.
-    
-    Args:
-        image_tensor: torch.Tensor, shape [Batch, H, W, C] or [H, W, C]
-        max_size_mb: float, maximum size in MB (default 4.0 to stay safely under 5.0)
-        max_px: int, maximum pixel dimension (width or height)
-        
-    Returns:
-        str: Base64 encoded string starting with 'data:image/jpeg;base64,'
-    """
-    import io
-    import base64
+    return final_image, final_mask, w, h

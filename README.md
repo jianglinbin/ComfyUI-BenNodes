@@ -1,6 +1,6 @@
 # ComfyUI-BenNodes
 
-ComfyUI 自定义节点集合，提供 25 个实用节点，涵盖图像处理、文本处理、数据转换、AI 分析、系统工具和工作流控制等功能。
+ComfyUI 自定义节点集合，提供 22 个实用节点，涵盖图像处理、文本处理、数据转换、系统工具和工作流控制等功能。
 
 中文 | [English](README_EN.md)
 
@@ -9,9 +9,19 @@ ComfyUI 自定义节点集合，提供 25 个实用节点，涵盖图像处理�
 - 🖼️ **图像处理**: 智能缩放、批量加载、多种对齐模式
 - 📝 **文本处理**: 拆分、连接、保存、多行处理
 - 📊 **数据转换**: JSON 解析、类型转换、列表选择器
-- 🤖 **AI 分析**: GLM 多模态分析，支持图片、视频、PDF、Office 文档
 - 🔧 **系统工具**: 内存清理、非空切换、文件选择器
 - 🎮 **工作流控制**: 节点忽略、组忽略、参数分发器
+- 🌐 **中英双语**: 节点显示名、提示与错误消息支持中英文切换
+
+## 🌐 中英双语（i18n）
+
+节点显示名、CATEGORY、参数提示（tooltip）、错误消息均支持中英双语。语言解析优先级：
+
+1. 环境变量 `BENNODES_LANG`（`zh` / `en`，大小写不敏感）
+2. 项目根目录 `ben_nodes_config.json` 的 `"language"` 字段（可复制 `ben_nodes_config.json.example` 模板修改）
+3. 默认 `zh`
+
+> 注意：语言在节点包加载时确定一次，修改配置后需重启 ComfyUI 生效。下拉选项值（如"去除空行"、"仅显存"等）属于工作流保存值，为保证旧工作流兼容保持不变。
 
 ## 📦 安装
 
@@ -31,10 +41,6 @@ pip install -r requirements.txt
 ```
 
 ## 📚 节点列表
-
-### 🤖 AI 相关 (2个)
-- **GLM配置** - 配置 GLM 模型参数
-- **GLM多模态分析** - 分析图片、视频、PDF、Office 文档
 
 ### 📊 数据处理 (5个)
 - **选择分辨率** - 预设分辨率和比例选择
@@ -80,97 +86,14 @@ pip install -r requirements.txt
 pip install Pillow psutil
 ```
 
-### AI 功能依赖（使用 GLM 节点时需要）
-```bash
-pip install zhipuai
-```
-
 ### 图像增强依赖（推荐，用于羽化效果）
 ```bash
 pip install scipy
 ```
 
-### Office 文档处理依赖（可选）
-```bash
-pip install python-docx openpyxl python-pptx xlrd
-```
-
-### Windows 特定依赖（可选，仅 Windows）
-```bash
-pip install pywin32
-```
-
-### PDF 和视频处理依赖（可选）
-```bash
-pip install PyMuPDF opencv-python
-```
-
 ---
 
 ## 📖 详细文档
-
-
-### 🤖 AI 相关
-
-#### GLM配置
-
-**分类**: `BenNodes/AI`
-
-配置 GLM 大模型的参数，包括模型选择、温度、token 限制等。
-
-**输入参数**:
-- `vision_model` (STRING): 视觉模型名称，默认 "glm-4.6v-flash"
-- `text_model` (STRING): 文本模型名称，默认 "glm-4.5-flash"
-- `max_pages` (INT): PDF 处理最大页数，0 表示不限制
-- `max_tokens` (INT): 模型生成的最大 token 数，默认 8192
-- `temperature` (FLOAT): 控制输出随机性，建议 0.1-0.3
-- `top_p` (FLOAT): 限制候选词范围，建议 0.5-0.7
-- `chunk_mode` (COMBO): 大文件处理模式（auto/manual）
-- `thinking_enabled` (BOOLEAN): 是否启用思考功能
-
-**输出**:
-- `glm_config`: GLM 配置对象
-
-**使用示例**:
-```
-[GLM配置] → [GLM多模态分析]
-```
-
----
-
-#### GLM多模态分析
-
-**分类**: `BenNodes/AI`
-
-使用 GLM 大模型分析图片、视频、PDF、Office 文档或文本文件，支持大文件分块处理。
-
-**输入参数**:
-- `prompt` (STRING): 分析提示词
-- `system_prompt` (STRING): 系统提示词，定义模型角色和行为
-- `input` (ANY): 支持 ComfyUI 图片、视频数据类型，或文件路径字符串
-- `glm_config` (GLM_CONFIG): GLM 配置节点（可选）
-- `api_key` (STRING): GLM API 密钥
-
-**输出**:
-- `分析结果` (STRING LIST): 分析结果列表
-
-**支持的文件类型**:
-- 图片: .jpg, .jpeg, .png, .bmp, .gif, .webp
-- 视频: .mp4, .avi, .mov, .webm, .mkv
-- PDF: .pdf
-- Word: .docx, .doc
-- Excel: .xlsx, .xls
-- PowerPoint: .pptx, .ppt
-- 文本: .txt, .md, .json, .xml, .csv, .log, .py, .js, .html, .css
-
-**使用示例**:
-```
-[加载图片] → [GLM多模态分析] → [保存文本]
-                ↑
-         [GLM配置节点]
-```
-
----
 
 
 ### 📊 数据处理
@@ -493,7 +416,7 @@ length: 3
 
 **使用示例**:
 ```
-[GLM分析] → [保存文本]
+[文本处理器] → [保存文本]
             filename_prefix: "analysis"
             file_extension: ".md"
 ```
@@ -766,16 +689,7 @@ length: 3
             delimiter: \n   operation: 去除空行
 ```
 
-### 5. AI 分析工作流
-
-```
-[文件选择器] → [GLM多模态分析] → [JSON解析器] → [保存文本]
-                    ↑
-              [GLM配置节点]
-              api_key: "your_key"
-```
-
-### 6. 场景切换工作流
+### 5. 场景切换工作流
 
 ```
 [忽略组(高级)]
@@ -786,7 +700,7 @@ json_rules: {
 }
 ```
 
-### 7. 参数集中管理
+### 6. 参数集中管理
 
 ```
 [参数分发器] ──→ [节点A]
@@ -804,25 +718,6 @@ json_rules: {
 A: 检查依赖是否安装完整：
 ```bash
 pip install -r requirements.txt
-```
-
-### Q: GLM 节点报错？
-
-A: 确保已安装 `zhipuai` 并提供有效的 API 密钥：
-```bash
-pip install zhipuai
-```
-
-### Q: Office 文档无法处理？
-
-A: 安装 Office 文档处理依赖：
-```bash
-pip install python-docx openpyxl python-pptx xlrd
-```
-
-Windows 系统还需要：
-```bash
-pip install pywin32
 ```
 
 ### Q: 图像羽化效果不佳？

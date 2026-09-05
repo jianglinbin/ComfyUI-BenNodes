@@ -2,6 +2,8 @@
 提示词行处理器节点 - 处理多行提示词，支持提取指定范围的行
 """
 
+from ...utils.i18n import t
+
 class PromptLineBen:
     """提示词行处理器节点"""
     
@@ -29,37 +31,33 @@ class PromptLineBen:
                 "start_index": ("INT", {"default": 0, "min": 0, "max": 9999}),
                 "max_rows": ("INT", {"default": 1000, "min": 1, "max": 9999}),
                 "operation": (valid_operations_zh, {"default": "原始"})
-            },
-            "hidden": {
-                "workflow_prompt": "PROMPT", "my_unique_id": "UNIQUE_ID"
             }
         }
-    
+
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("STRING",)
     OUTPUT_IS_LIST = (True,)
     FUNCTION = "generate_strings"
-    CATEGORY = "BenNodes/文本"
-    
-    def generate_strings(self, prompt, start_index, max_rows, operation, workflow_prompt=None, my_unique_id=None):
+    CATEGORY = f"BenNodes/{t('common_cat_text')}"
+
+    def generate_strings(self, prompt, start_index, max_rows, operation):
         """处理多行提示词，提取指定范围的行并应用指定操作"""
         # 特殊处理空输入
         if not prompt:
             return ([],)
-        
+
         # 确保prompt是字符串类型
         if isinstance(prompt, list):
             prompt = ' '.join(map(str, prompt))
         elif not isinstance(prompt, str):
             prompt = str(prompt)
-        
+
         # 转换中文操作到英文
         if operation in self.CHINESE_TO_ENGLISH:
             operation = self.CHINESE_TO_ENGLISH[operation]
-        
-        # 解析操作（支持字符串、列表或逗号分隔格式）
-        valid_operations = ["original", "uppercase", "lowercase", "capitalize", 
-                          "TitleCase", "strip", "Reverse", "Count", "RemoveEmptyLines"]
+
+        # 有效操作集合（来自映射字典的英文值，避免重复维护）
+        valid_operations = set(self.CHINESE_TO_ENGLISH.values())
         
         # 将操作转换为列表并找到第一个有效操作
         operations = []

@@ -1,5 +1,6 @@
 import { app } from "../../scripts/app.js";
 
+import { t } from "./i18n.js";
 app.registerExtension({
     name: "ben.listIndexSelector",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
@@ -219,7 +220,7 @@ app.registerExtension({
                 addListLengthPreview(node);
             }
             
-            node._listLengthPreview.textContent = `列表长度: ${listLength}`;
+            node._listLengthPreview.textContent = t("list_length", listLength);
         }
         
         // 保存原始的执行函数（如果存在）
