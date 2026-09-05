@@ -164,4 +164,68 @@ ComfyUI-BenNodes/
 ## 当前节点统计
 
 - **总节点数**: 22 个（控制 7 / 数据 5 / 文本 5 / 图像 4 / 文件 1，AI 类已移除）
-- **测试**: `tests/test_all_nodes.py`（注册）+ `tests/test_nodes_behavior.py`（功能 28 用例）
+- **测试**: `tests/test_all_nodes.py`（注册）+ `tests/test_nodes_behavior.py`（功能 37 用例）
+
+---
+
+# 2026-09-06 图像缩放与扩展逻辑修复记录
+
+## 修复内容
+
+- **P1 羽化注释修正**: `apply_feather` 注释与实现方向相反（实现/测试均为"图像区=0、补边区=255、在图像区做距离变换"），修正注释并说明 scipy EDT 无背景点时的边界晕影风险
+- **P2 非 pad 模式遮罩语义统一**: contain/crop/fill/none 模式遮罩由全 255（=整幅被遮蔽，与 ComfyUI MASK 语义矛盾）改为全 0（=全部可见）；`apply_feather` 增加保护——遮罩无补边区（全 0）或无图像区（全 255）时原样返回，避免 scipy EDT 按数组边界计算产生 0~248 意外晕影
+- **P3 contain 尺寸回报修正**: contain 模式输出为"长边对齐"实际尺寸（可能超出目标容器，如 4:3 图 → 16:9 目标输出 1280x960），`ImageScalerBen` 的 RETURN width/height 由目标尺寸改为实际输出尺寸，与 ui 字段及输出张量一致
+- **P4 alpha 组合逻辑修复**: 源图 alpha 由"拉伸到整个输出画布 + min() 组合"改为"按缩放几何对齐到图像子矩形 + max() 组合"：
+  - 修复不透明 RGBA PNG + pad 模式时补边区遮罩被清除为 0 的缺陷（outpaint 失效）
+  - 修复长宽比不一致时 alpha 与内容错位
+  - pad/contain/crop/fill/none 各模式分别按自身几何处理 alpha
+- **P5 混合尺寸批次保护**: `ImageScalerBen` 在 `torch.stack` 前校验批次内输出尺寸一致性，不一致时抛出 i18n 双语清晰错误（新增 `image_scaler_batch_size_mismatch` key，词典 107/107）
+
+## 行为变更说明
+
+- MASK 输出语义变化：crop/fill/contain/none 模式的 MASK 从全 1.0 变为全 0.0（更符合 ComfyUI"1=被遮蔽"约定；pad 模式不变）
+- `ImageScalerBen` 的 width/height 输出在 contain/none 模式下为实际尺寸（此前为目标尺寸）
+- RGBA/P 带透明通道图像经 ImageLoaderBen 缩放时，透明区将在 MASK 中正确标记为被遮蔽
+
+## 验证
+
+- 功能测试 37/37 通过（新增 9 个用例：遮罩语义、羽化保护、alpha 各模式对齐、contain 尺寸回报、批次保护）
+- 注册测试通过（22 节点）；词典对齐 107/107
+
+---
+
+# 2026-09-06 分辨率短边语义修复记录
+
+## 问题（用户报告）
+
+9:16 @1080p 竖屏输入（1080x1920）选 2K contain，输出仅 810x1440——比输入还小，"根本不到 2K"。
+
+## 根本原因
+
+`BaseResolutionNode.calculate_dimensions` 将预设基准固定作用于高度，无视画面方向：
+
+- 横屏 16:9：高度=短边 → 2K=2560x1440 ✓
+- 竖屏 9:16：高度=长边 → 2K=808x1440，短边仅 808px ✗（竖屏惯例应由短边定义档位：2K=1440x2560）
+
+且项目内自相矛盾：ResolutionSelectorBen 重写 `BASE_DIMENSION='width'`（竖屏对、横屏错），其余 4 个分辨率节点用默认 height（横屏对、竖屏错）。
+
+## 修复内容
+
+- `calculate_dimensions` 改为方向感知短边语义：竖屏比例（ratio_h > ratio_w）基准作用于宽度，横屏/方形作用于高度，双维度 8 对齐
+- 删除 ResolutionSelectorBen 的 `BASE_DIMENSION='width'` 重写，全节点统一语义
+- `js/shared.js` calcDims 同步短边语义，并修复预览无 8 对齐导致的显示漂移（预览 810 vs 实际 808）
+- 新增回归测试：竖屏 9:16 各档位（1080p=1080x1920 / 2K=1440x2560 / 4K=2160x3840 / 8K=4320x7680）、横屏行为不变、9:16@1080p 输入 2K contain 输出 1440x2560
+- README 双语补充"分辨率预设说明"
+
+## 修复后行为
+
+| 预设 | 9:16 竖屏 | 16:9 横屏 |
+|---|---|---|
+| 1080p | 1080x1920（原 600x1080） | 1920x1080（不变） |
+| 2K | 1440x2560（原 808x1440） | 2560x1440（不变） |
+| 4K | 2160x3840（原 1208x2160） | 3840x2160（不变） |
+| 8K | 4320x7680（原 2424x4320） | 7680x4320（不变） |
+
+## 验证
+
+- 功能测试 39/39 通过；注册测试通过（22 节点）

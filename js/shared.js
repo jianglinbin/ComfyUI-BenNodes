@@ -63,7 +63,8 @@ export function showWidget(widget) {
 }
 
 /**
- * 计算分辨率
+ * 计算分辨率（与后端 calculate_dimensions 保持一致）
+ * 预设基准作用于短边：竖屏比例→宽度，横屏/方形比例→高度；结果向下对齐到 8 的倍数
  * @param {string} res - 分辨率预设名称
  * @param {string} ratio - 宽高比预设名称
  * @param {number} width - 自定义宽度
@@ -72,9 +73,19 @@ export function showWidget(widget) {
  */
 export function calcDims(res, ratio, width, height) {
     if (res === "自定义") return { width: width, height: height };
-    const h = RESOLUTIONS[res] || 720;
+    const base = RESOLUTIONS[res] || 720;
     const r = ASPECT_RATIOS[ratio] || [16, 9];
-    return { width: Math.round(h * r[0] / r[1]), height: h };
+    let w, h;
+    if (r[1] > r[0]) {
+        // 竖屏比例：基准作用于短边（宽度）
+        w = base;
+        h = base * r[1] / r[0];
+    } else {
+        // 横屏/方形比例：基准作用于短边（高度）
+        w = base * r[0] / r[1];
+        h = base;
+    }
+    return { width: Math.floor(w / 8) * 8, height: Math.floor(h / 8) * 8 };
 }
 
 /**

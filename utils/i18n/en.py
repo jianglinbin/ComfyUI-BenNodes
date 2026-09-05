@@ -44,6 +44,7 @@ TRANSLATIONS = {
 
     # ===== ImageScalerBen =====
     "image_scaler_pad_color_placeholder": "R,G,B (e.g.: 255,0,0)",
+    "image_scaler_batch_size_mismatch": "Inconsistent output sizes within batch (with resize_mode 'none'/'contain', differing source sizes or aspect ratios produce different output sizes). Use 'pad'/'crop'/'fill' mode or ensure uniform source images",
 
     # ===== ImageBatchLoaderBen =====
     "image_batch_loader_folder_path_label": "Folder Path",

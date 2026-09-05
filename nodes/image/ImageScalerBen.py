@@ -89,27 +89,32 @@ class ImageScalerBen(BaseResolutionNode):
                     [position] * batch_size,
                     [pad_color_tuple] * batch_size
                 ))
-                
-            for i, (img_tensor, mask_tensor, fw, fh) in enumerate(results):
+
+            for img_tensor, mask_tensor, fw, fh in results:
                 result_images.append(img_tensor)
                 result_masks.append(mask_tensor)
-                if i == (batch_size - 1):
-                    final_width, final_height = fw, fh
+            # 宽高取最后一张的实际输出尺寸（contain/none 模式下可能与目标尺寸不同）
+            final_width, final_height = results[-1][2], results[-1][3]
         else:
-            for i, pil_image in enumerate(pil_images):
+            for pil_image in pil_images:
                 img_tensor, mask_tensor, fw, fh = self._process_single_pil_image(pil_image, resize_mode, target_width, target_height, feathering, upscale_method, position, pad_color_tuple)
                 result_images.append(img_tensor)
                 result_masks.append(mask_tensor)
-                if i == (batch_size - 1):
-                    final_width, final_height = fw, fh
-        
+                final_width, final_height = fw, fh
+
+        # 批次内输出尺寸必须一致才能堆叠；none/contain 模式下原图尺寸或宽高比不同会导致不一致
+        first_shape = result_images[0].shape
+        for idx, img_tensor in enumerate(result_images):
+            if img_tensor.shape != first_shape:
+                raise ValueError(t("image_scaler_batch_size_mismatch"))
+
         # 使用torch.stack批量合并结果
         output_image = torch.stack(result_images, dim=0)
         output_mask = torch.stack(result_masks, dim=0)
-        
+
         return {
             "ui": {
                 "resolution_info": [{"width": final_width, "height": final_height, "resolution": resolution, "aspect_ratio": aspect_ratio, "resize_mode": resize_mode, "pad_color": pad_color}],
             },
-            "result": (output_image, output_mask, target_width, target_height),
+            "result": (output_image, output_mask, final_width, final_height),
         }

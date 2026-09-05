@@ -58,6 +58,7 @@ TextSplitBen = load("nodes.text.TextSplitterBen").TextSplitBen
 TextJoinBen = load("nodes.text.TextJoinerBen").TextJoinBen
 TextProcessorBen = load("nodes.text.TextProcessorBen").TextProcessorBen
 image_utils = load("utils.image.image_utils")
+ImageScalerBen = load("nodes.image.ImageScalerBen").ImageScalerBen
 
 any_type = load("utils.constants.constants").any_type
 
@@ -388,6 +389,9 @@ def test_image_utils_resize_contain():
     # contain 等比缩放：100x50 -> 200x100
     assert resized.size == (200, 100)
     assert mask.size == (200, 100)
+    # 遮罩语义（ComfyUI MASK：255=被遮蔽）：输出全为图像内容，遮罩全 0（可见）
+    mask_array = np.array(mask)
+    assert mask_array.min() == 0 and mask_array.max() == 0
 
 
 def test_image_utils_resize_pad():
@@ -428,6 +432,167 @@ def test_image_utils_process_for_comfy():
     assert img_tensor.shape == (1, 100, 200, 3)
     assert mask_tensor.shape == (1, 100, 200)
     assert (fw, fh) == (200, 100)
+
+
+def test_image_utils_crop_fill_none_masks_all_visible():
+    # crop/fill/none 输出全为图像内容，遮罩应全 0（可见），而非全 255（被遮蔽）
+    img = Image.new("RGB", (100, 50), color=(255, 0, 0))
+    result, mask = image_utils.ImageScaleUtils.resize_crop(img, 200, 100, feathering=0)
+    assert np.array(mask).max() == 0
+    result, mask = image_utils.ImageScaleUtils.resize_fill(img, 200, 100, feathering=0)
+    assert np.array(mask).max() == 0
+    _, mask_none = image_utils.ImageScaleUtils.apply_scale_mode_with_mask(img, "none", 200, 100, 0)
+    assert np.array(mask_none).max() == 0
+
+
+def test_image_utils_apply_feather_uniform_masks():
+    # 全 0（无补边区）/ 全 255（无图像区）时羽化应原样返回，不产生意外渐变
+    r0 = np.array(image_utils.ImageScaleUtils.apply_feather(Image.new("L", (100, 100), 0), 40))
+    r255 = np.array(image_utils.ImageScaleUtils.apply_feather(Image.new("L", (100, 100), 255), 40))
+    assert r0.min() == 0 and r0.max() == 0
+    assert r255.min() == 255 and r255.max() == 255
+
+
+def _rgba_image(size, alpha):
+    """构造 RGBA 测试图：RGB 全红，alpha 为标量或 (H, W) uint8 数组"""
+    img = Image.new("RGBA", size, (255, 0, 0, 255))
+    if not isinstance(alpha, int):
+        img.putalpha(Image.fromarray(alpha.astype(np.uint8)))
+    else:
+        img.putalpha(Image.new("L", size, alpha))
+    return img
+
+
+def test_image_utils_alpha_pad_opaque_keeps_pad_mask():
+    # 回归测试（P4）：不透明 RGBA + pad（经 process_image_for_comfy 提取 alpha），
+    # 补边区遮罩必须保持 255（此前被 min() 组合清除为 0）
+    img = _rgba_image((50, 100), 255)
+    _, mask_tensor, _, _ = image_utils.process_image_for_comfy(img, "pad", 200, 100, 0)
+    mask_array = (mask_tensor[0].numpy() * 255).round().astype(np.uint8)
+    assert mask_array[50, 100] == 0   # 中心（图像区，alpha 不透明 → 可见）
+    assert mask_array[2, 2] == 255    # 左上角（补边区，不被不透明 alpha 清除）
+
+
+def test_image_utils_alpha_pad_transparent_region_masked():
+    # 半透明 RGBA + pad：图像子矩形内透明处=255（与内容几何对齐），补边区=255
+    alpha = np.full((100, 50), 255, dtype=np.uint8)
+    alpha[:, 25:] = 0  # 图像右半透明
+    img = _rgba_image((50, 100), alpha)
+    _, mask_tensor, _, _ = image_utils.process_image_for_comfy(img, "pad", 200, 100, 0)
+    mask_array = (mask_tensor[0].numpy() * 255).round().astype(np.uint8)
+    # 50x100 内容等比缩放后 50x100，居中放置 x_offset=75, y_offset=0
+    assert mask_array[50, 80] == 0    # 图像区不透明处（内容列 5 < 25）
+    assert mask_array[50, 110] == 255  # 图像区透明处（内容列 35 ≥ 25）
+    assert mask_array[2, 2] == 255    # 补边区
+
+
+def test_image_utils_alpha_contain_alignment():
+    # contain：alpha 随内容等比缩放，透明处=255
+    alpha = np.full((100, 100), 255, dtype=np.uint8)
+    alpha[:50, :] = 0  # 上半透明
+    img = _rgba_image((100, 100), alpha).convert("RGB")
+    result, mask = image_utils.ImageScaleUtils.resize_contain(
+        img, 200, 200, feathering=0, alpha=Image.fromarray(alpha)
+    )
+    mask_array = np.array(mask)
+    assert mask_array[25, 100] == 255  # 缩放后透明区（上半）
+    assert mask_array[150, 100] == 0   # 不透明区（下半）
+
+
+def test_image_utils_alpha_fill_gradient():
+    # fill：alpha 拉伸到目标尺寸，遮罩 = 255 - alpha（保留渐变语义）
+    alpha = np.full((100, 100), 128, dtype=np.uint8)
+    img = _rgba_image((100, 100), alpha).convert("RGB")
+    result, mask = image_utils.ImageScaleUtils.resize_fill(
+        img, 200, 100, feathering=0, alpha=Image.fromarray(alpha)
+    )
+    assert (np.array(mask) == 127).all()
+
+
+def test_image_utils_alpha_none_mode_via_process():
+    # 通过 process_image_for_comfy 全路径验证：none 模式 + RGBA，透明处=255
+    alpha = np.full((100, 100), 255, dtype=np.uint8)
+    alpha[:50, :] = 0
+    img = _rgba_image((100, 100), alpha)
+    img_tensor, mask_tensor, fw, fh = image_utils.process_image_for_comfy(img, "none", 200, 100, 0)
+    mask_array = (mask_tensor[0].numpy() * 255).round().astype(np.uint8)
+    assert mask_array[10, 50] == 255  # 透明处（上半）
+    assert mask_array[90, 50] == 0    # 不透明处（下半）
+
+
+def test_image_scaler_return_actual_size_contain():
+    # 回归测试（P3）：RETURN 的 width/height 应为实际输出尺寸而非目标尺寸
+    node = ImageScalerBen()
+    img_tensor = torch.zeros((1, 768, 1024, 3), dtype=torch.float32)  # 4:3 图像
+    result = node.process(
+        image=img_tensor, resolution="720p", aspect_ratio="16:9",
+        width=1080, height=720, resize_mode="contain", position="center",
+        feathering=0, upscale_method="bicubic", pad_color="127,127,127",
+    )
+    out_image, out_mask, out_w, out_h = result["result"]
+    # contain：1024x768 -> 1280x960（长边对齐，超出 720p 16:9 容器高度）
+    assert out_image.shape == (1, 960, 1280, 3)
+    assert (out_w, out_h) == (1280, 960)
+
+
+def test_image_scaler_batch_size_mismatch_raises():
+    # 回归测试（P5）：批次内输出尺寸不一致时应给出清晰错误，而非 torch.stack 崩溃。
+    # 正常张量输入尺寸一致；不一致可能来自异常兜底路径（返回 target 尺寸黑图），
+    # 这里通过替身 _process_single_pil_image 直接构造不一致场景验证保护逻辑。
+    node = ImageScalerBen()
+    uniform = torch.zeros((2, 100, 100, 3), dtype=torch.float32)
+
+    def fake_process(pil_image, *args, **kwargs):
+        if not hasattr(fake_process, "calls"):
+            fake_process.calls = 0
+        fake_process.calls += 1
+        if fake_process.calls == 1:
+            return torch.zeros((100, 100, 3)), torch.zeros((100, 100)), 100, 100
+        return torch.zeros((150, 120, 3)), torch.zeros((150, 120)), 120, 150
+
+    node._process_single_pil_image = fake_process
+    try:
+        node.process(
+            image=uniform, resolution="自定义", aspect_ratio="自定义",
+            width=100, height=100, resize_mode="contain", position="center",
+            feathering=0, upscale_method="bicubic", pad_color="127,127,127",
+        )
+        assert False, "应抛出 ValueError"
+    except ValueError as e:
+        assert "尺寸不一致" in str(e)
+
+
+def test_calculate_dimensions_short_side_semantics():
+    # 回归测试：分辨率预设基准作用于短边（竖屏→宽，横屏/方形→高）
+    node = ImageScalerBen()
+    # 竖屏 9:16：行业惯例 1080p=1080x1920、2K=1440x2560
+    assert node.calculate_dimensions("1080p", "9:16", 1080, 720) == (1080, 1920)
+    assert node.calculate_dimensions("2K", "9:16", 1080, 720) == (1440, 2560)
+    assert node.calculate_dimensions("4K", "9:16", 1080, 720) == (2160, 3840)
+    assert node.calculate_dimensions("8K", "9:16", 1080, 720) == (4320, 7680)
+    # 横屏 16:9（行为不变）
+    assert node.calculate_dimensions("1080p", "16:9", 1080, 720) == (1920, 1080)
+    assert node.calculate_dimensions("2K", "16:9", 1080, 720) == (2560, 1440)
+    assert node.calculate_dimensions("4K", "16:9", 1080, 720) == (3840, 2160)
+    # 方形
+    assert node.calculate_dimensions("2K", "1:1", 1080, 720) == (1440, 1440)
+    # 自定义透传
+    assert node.calculate_dimensions("自定义", "9:16", 123, 456) == (123, 456)
+
+
+def test_image_scaler_portrait_2k_contain_not_shrink():
+    # 回归测试（用户报告）：9:16@1080p 输入选 2K contain，
+    # 输出应为 1440x2560（≥输入），而非修复前的 810x1440（比输入还小）
+    node = ImageScalerBen()
+    img = torch.zeros((1, 1920, 1080, 3), dtype=torch.float32)  # H=1920, W=1080（9:16 竖屏 1080p）
+    result = node.process(
+        image=img, resolution="2K", aspect_ratio="9:16",
+        width=1080, height=720, resize_mode="contain", position="center",
+        feathering=0, upscale_method="bicubic", pad_color="127,127,127",
+    )
+    out_image, _, out_w, out_h = result["result"]
+    assert out_image.shape == (1, 2560, 1440, 3)
+    assert (out_w, out_h) == (1440, 2560)
 
 
 # ---------------------------------------------------------------------------

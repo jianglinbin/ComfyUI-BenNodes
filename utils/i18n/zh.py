@@ -44,6 +44,7 @@ TRANSLATIONS = {
 
     # ===== ImageScalerBen =====
     "image_scaler_pad_color_placeholder": "R,G,B (例如: 255,0,0)",
+    "image_scaler_batch_size_mismatch": "批次内图像输出尺寸不一致（resize_mode 为 none/contain 时，原图尺寸或宽高比不同会导致输出尺寸不同），请改用 pad/crop/fill 模式或保证批次内图像一致",
 
     # ===== ImageBatchLoaderBen =====
     "image_batch_loader_folder_path_label": "文件夹路径",

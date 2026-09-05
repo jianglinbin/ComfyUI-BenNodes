@@ -323,6 +323,11 @@ Scale, crop, pad images with batch processing and multi-threading support.
 - Custom padding color
 - Feathering effect (requires scipy)
 
+**Resolution preset note** (applies to all nodes with resolution/aspect_ratio params):
+- The preset base value always applies to the **short side** (orientation-aware): height for landscape/square ratios, width for portrait ratios
+- e.g. 9:16 portrait: 1080p=1080x1920, 2K=1440x2560, 4K=2160x3840, 8K=4320x7680; 16:9 landscape: 1080p=1920x1080
+- Output dimensions are rounded down to multiples of 8 (ComfyUI latent compatibility)
+
 ---
 
 #### Empty Latent Image

@@ -9,9 +9,6 @@ from ...utils.i18n import t
 class ResolutionSelectorBen(BaseResolutionNode):
     """分辨率选择器节点"""
 
-    # 基于宽度计算分辨率（重写基类默认值）
-    BASE_DIMENSION = 'width'
-
     @classmethod
     def INPUT_TYPES(cls):
         """定义输入参数 - 无输入端口，所有参数通过节点设置面板配置"""

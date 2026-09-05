@@ -33,10 +33,13 @@ class ImageScaleUtils:
     from PIL import ImageFilter
     
     @staticmethod
-    def resize_contain(img, target_width, target_height, feathering, upscale_method="bicubic"):
+    def resize_contain(img, target_width, target_height, feathering, upscale_method="bicubic", alpha=None):
         """
         contain: 保持原图宽高比，让图像的大边与目标尺寸对齐，小边根据大边的缩放比例计算。
         返回的是缩放后的图像实际尺寸，而不是包含空白区域的目标尺寸。
+
+        Args:
+            alpha: 可选，原图的 alpha 通道（PIL L 模式），将按缩放几何对齐融入遮罩（透明处=255 被遮蔽）
         """
         img_width, img_height = img.size
 
@@ -60,8 +63,13 @@ class ImageScaleUtils:
         # 使用指定的插值方法进行缩放
         resized_img = img.resize((new_width, new_height), resample_method)
 
-        # 创建与缩放后图像相同尺寸的全白遮罩
-        mask = Image.new("L", (new_width, new_height), 255)
+        # 遮罩语义（ComfyUI MASK：255=被遮蔽）：输出全部为图像内容，默认全 0（可见）；
+        # 有 alpha 时透明像素处为 255（被遮蔽）
+        mask_array = np.zeros((new_height, new_width), dtype=np.uint8)
+        if alpha is not None:
+            alpha_scaled = alpha.resize((new_width, new_height), Image.Resampling.BICUBIC)
+            mask_array = np.maximum(mask_array, 255 - np.array(alpha_scaled, dtype=np.int16)).astype(np.uint8)
+        mask = Image.fromarray(mask_array)
 
         # 应用羽化效果
         if feathering > 0:
@@ -70,18 +78,19 @@ class ImageScaleUtils:
         return resized_img, mask
 
     @staticmethod
-    def resize_pad(img, target_width, target_height, feathering, upscale_method="bicubic", position="center", pad_color=(127, 127, 127)):
+    def resize_pad(img, target_width, target_height, feathering, upscale_method="bicubic", position="center", pad_color=(127, 127, 127), alpha=None):
         """
         pad: 保持原图宽高比先按contain规则缩放，再在空白区域补边，最终尺寸与目标容器完全一致。
-        
+
         Args:
             img: PIL Image to resize
             target_width: Target width
-            target_height: Target height  
+            target_height: Target height
             feathering: Feathering amount for edges
             upscale_method: Interpolation method ("bicubic", "bilinear", "lanczos")
             position: Position for image placement ("center", "top", "bottom", "left", "right")
             pad_color: Color for padding area as RGB tuple, default (127, 127, 127)
+            alpha: 可选，原图的 alpha 通道（PIL L 模式），仅在图像子矩形内融入遮罩（透明处=255 被遮蔽）
         """
         img_width, img_height = img.size
 
@@ -99,7 +108,7 @@ class ImageScaleUtils:
 
         # Use specified pad color instead of default gray
         new_img = Image.new("RGB", (target_width, target_height), pad_color)
-        
+
         position_offsets = {
             "center": ((target_width - new_width) // 2, (target_height - new_height) // 2),
             "top": ((target_width - new_width) // 2, 0),
@@ -110,8 +119,19 @@ class ImageScaleUtils:
         x_offset, y_offset = position_offsets.get(position, position_offsets["center"])
         new_img.paste(resized_img, (x_offset, y_offset))
 
+        # 遮罩语义（ComfyUI MASK：255=被遮蔽）：图像区=0，补边区=255
         mask = Image.new("L", (target_width, target_height), 255)
         mask.paste(0, (x_offset, y_offset, x_offset + new_width, y_offset + new_height))
+
+        if alpha is not None:
+            # alpha 仅作用于图像子矩形（与内容几何对齐），透明处=255（被遮蔽）；
+            # 不透明的 alpha 不会清除补边区的 255
+            alpha_scaled = alpha.resize((new_width, new_height), Image.Resampling.BICUBIC)
+            region_box = (x_offset, y_offset, x_offset + new_width, y_offset + new_height)
+            region_array = np.array(mask.crop(region_box), dtype=np.int16)
+            alpha_blocked = 255 - np.array(alpha_scaled, dtype=np.int16)
+            region_array = np.maximum(region_array, alpha_blocked).astype(np.uint8)
+            mask.paste(Image.fromarray(region_array), (x_offset, y_offset))
 
         if feathering > 0:
             mask = ImageScaleUtils.apply_feather(mask, feathering)
@@ -119,9 +139,12 @@ class ImageScaleUtils:
         return new_img, mask
 
     @staticmethod
-    def resize_crop(img, target_width, target_height, feathering, upscale_method="bicubic", position="center"):
+    def resize_crop(img, target_width, target_height, feathering, upscale_method="bicubic", position="center", alpha=None):
         """
         crop/cover: 保持原图宽高比，缩放到至少填满目标容器，超出部分裁剪，无空白边。
+
+        Args:
+            alpha: 可选，原图的 alpha 通道（PIL L 模式），按相同几何缩放并裁剪后融入遮罩（透明处=255 被遮蔽）
         """
         img_width, img_height = img.size
 
@@ -147,7 +170,17 @@ class ImageScaleUtils:
         crop_x, crop_y = position_offsets.get(position, position_offsets["center"])
         result = resized_img.crop((crop_x, crop_y, crop_x + target_width, crop_y + target_height))
 
-        mask = Image.new("L", (target_width, target_height), 255)
+        # 遮罩语义（ComfyUI MASK：255=被遮蔽）：输出全部为图像内容，默认全 0（可见）；
+        # 有 alpha 时按相同几何裁剪，透明像素处为 255（被遮蔽）
+        mask_array = np.zeros((target_height, target_width), dtype=np.uint8)
+        if alpha is not None:
+            alpha_scaled = alpha.resize((new_width, new_height), Image.Resampling.BICUBIC)
+            alpha_cropped = np.array(
+                alpha_scaled.crop((crop_x, crop_y, crop_x + target_width, crop_y + target_height)),
+                dtype=np.int16,
+            )
+            mask_array = (255 - alpha_cropped).astype(np.uint8)
+        mask = Image.fromarray(mask_array)
 
         if feathering > 0:
             mask = ImageScaleUtils.apply_feather(mask, feathering)
@@ -155,9 +188,12 @@ class ImageScaleUtils:
         return result, mask
 
     @staticmethod
-    def resize_fill(img, target_width, target_height, feathering, upscale_method="bicubic"):
+    def resize_fill(img, target_width, target_height, feathering, upscale_method="bicubic", alpha=None):
         """
         fill: 直接拉伸图片至目标尺寸，不保持宽高比且无裁剪补边。
+
+        Args:
+            alpha: 可选，原图的 alpha 通道（PIL L 模式），拉伸到目标尺寸后融入遮罩（透明处=255 被遮蔽）
         """
         # 根据upscale_method选择插值方法
         resample_method = Image.Resampling.BICUBIC
@@ -169,8 +205,13 @@ class ImageScaleUtils:
         # 直接拉伸到目标尺寸，不保持宽高比
         result = img.resize((target_width, target_height), resample_method)
 
-        # 创建全白遮罩，因为整个区域都是图片内容
-        mask = Image.new("L", (target_width, target_height), 255)
+        # 遮罩语义（ComfyUI MASK：255=被遮蔽）：输出全部为图像内容，默认全 0（可见）；
+        # 有 alpha 时拉伸到目标尺寸，透明像素处为 255（被遮蔽）
+        mask_array = np.zeros((target_height, target_width), dtype=np.uint8)
+        if alpha is not None:
+            alpha_scaled = alpha.resize((target_width, target_height), Image.Resampling.BICUBIC)
+            mask_array = (255 - np.array(alpha_scaled, dtype=np.int16)).astype(np.uint8)
+        mask = Image.fromarray(mask_array)
 
         # 应用羽化效果
         if feathering > 0:
@@ -179,27 +220,35 @@ class ImageScaleUtils:
         return result, mask
 
     @staticmethod
-    def apply_scale_mode_with_mask(img, scale_mode, target_width, target_height, feathering, upscale_method="bicubic", position="center", pad_color=(127, 127, 127)):
+    def apply_scale_mode_with_mask(img, scale_mode, target_width, target_height, feathering, upscale_method="bicubic", position="center", pad_color=(127, 127, 127), alpha=None):
         """
         根据指定的缩放模式处理图像并生成相应的遮罩
         这个方法调用对应的专用缩放方法以保持一致性
+
+        Args:
+            alpha: 可选，原图的 alpha 通道（PIL L 模式），由各缩放方法按自身几何融入遮罩
         """
         if scale_mode == "none":
-            mask = Image.new("L", img.size, 255)
+            # 遮罩语义（ComfyUI MASK：255=被遮蔽）：图像原样输出，默认全 0（可见）；
+            # 有 alpha 时透明像素处为 255（被遮蔽）
+            mask_array = np.zeros((img.size[1], img.size[0]), dtype=np.uint8)
+            if alpha is not None:
+                mask_array = (255 - np.array(alpha, dtype=np.int16)).astype(np.uint8)
+            mask = Image.fromarray(mask_array)
             if feathering > 0:
                 mask = ImageScaleUtils.apply_feather(mask, feathering)
             return img, mask
         elif scale_mode == "contain":
-            return ImageScaleUtils.resize_contain(img, target_width, target_height, feathering, upscale_method)
+            return ImageScaleUtils.resize_contain(img, target_width, target_height, feathering, upscale_method, alpha)
         elif scale_mode == "crop":
-            return ImageScaleUtils.resize_crop(img, target_width, target_height, feathering, upscale_method, position)
+            return ImageScaleUtils.resize_crop(img, target_width, target_height, feathering, upscale_method, position, alpha)
         elif scale_mode == "pad":
-            return ImageScaleUtils.resize_pad(img, target_width, target_height, feathering, upscale_method, position, pad_color)
+            return ImageScaleUtils.resize_pad(img, target_width, target_height, feathering, upscale_method, position, pad_color, alpha)
         elif scale_mode == "fill":
-            return ImageScaleUtils.resize_fill(img, target_width, target_height, feathering, upscale_method)
+            return ImageScaleUtils.resize_fill(img, target_width, target_height, feathering, upscale_method, alpha)
         else:
-            mask = Image.new("L", img.size, 255)
-            return img, mask
+            # 未知模式按 none 处理
+            return ImageScaleUtils.apply_scale_mode_with_mask(img, "none", target_width, target_height, feathering, upscale_method, position, pad_color, alpha)
     
     @staticmethod
     def apply_feather(mask, feathering):
@@ -207,16 +256,21 @@ class ImageScaleUtils:
         为遮罩添加羽化效果。
         羽化值越大，图像边缘的过渡越平滑（在图像范围内应用）。
         """
-        # 转换为numpy数组
-        mask_array = np.array(mask)
-        
         # 如果羽化值为0，直接返回原遮罩
         if feathering <= 0:
             return mask
-        
-        # 找到黑色区域的边缘
-        # 遮罩语义（见上方 resize_pad）：255=图像区，0=补边区
-        # 羽化：在补边区内做距离变换，使图像边缘从 255 渐变到 0（软边）
+
+        # 转换为numpy数组
+        mask_array = np.array(mask)
+
+        # 无渐变可做时直接返回：
+        # - 全 255（无图像区）或全 0（无补边区，如 crop/fill/none 模式）
+        # - 避免 scipy EDT 在无背景点时按数组边界计算产生意外晕影
+        if mask_array.min() == 255 or mask_array.max() == 0:
+            return mask
+
+        # 遮罩语义（与 resize_pad 输出及 ComfyUI MASK 一致）：0=图像区（可见），255=补边区（被遮蔽）
+        # 羽化：在图像区内做距离变换，使靠近补边区的图像边缘从 0 渐变到 255（软边）
         if ImageScaleUtils.HAS_SCIPY:
             image_mask = mask_array == 0
             distance = ImageScaleUtils.distance_transform_edt(image_mask)
@@ -272,42 +326,34 @@ def process_image_for_comfy(pil_image, resize_mode, target_width, target_height,
         # Keep transparency info
         original_image = i.copy()
         current_frame = i.convert("RGB")
-        
+
+        # 提取 alpha 通道（LA/RGBA 或带 transparency 的 P 模式），
+        # 交给缩放函数按各自几何对齐融入遮罩（透明处=255 被遮蔽）
+        alpha_channel = None
+        if 'A' in original_image.getbands():
+            alpha_channel = Image.fromarray(np.array(original_image.getchannel('A')).astype(np.uint8))
+        elif str(original_image.mode).strip() == 'P' and 'transparency' in original_image.info:
+            alpha_channel = Image.fromarray(np.array(original_image.convert('RGBA').getchannel('A')).astype(np.uint8))
+
         # Apply scaling
         processed_img, mask = ImageScaleUtils.apply_scale_mode_with_mask(
-            current_frame, resize_mode, target_width, target_height, feathering, upscale_method, position, pad_color
+            current_frame, resize_mode, target_width, target_height, feathering, upscale_method, position, pad_color, alpha_channel
         )
-        
+
         if w is None:
             w, h = processed_img.size
-            
+
         # Skip frames that don't match expected size (shouldn't happen with our scaling but safety check)
         if processed_img.size[0] != w or processed_img.size[1] != h:
             continue
-            
+
         # Convert to numpy
         img_np = np.array(processed_img).astype(np.float32) / 255.0
         mask_np = np.array(mask).astype(np.float32) / 255.0
-        
-        # Handle alpha channel merging if present
-        if 'A' in original_image.getbands():
-            alpha_channel = np.array(original_image.getchannel('A')).astype(np.float32) / 255.0
-            alpha_img = Image.fromarray((alpha_channel * 255).astype(np.uint8))
-            alpha_img = alpha_img.resize(processed_img.size, Image.Resampling.BICUBIC)
-            alpha_resized = np.array(alpha_img).astype(np.float32) / 255.0
-            mask_np = np.minimum(mask_np, 1.0 - alpha_resized) # Use the image's alpha as the mask (1.0 = opaque)
-            # 遮罩语义：0.0 = 可见区，1.0 = 被遮蔽/透明区（与 ComfyUI LoadImage 的 alpha 行为一致）
-            # 图像不透明处 alpha 贡献 1.0-1.0=0.0（可见）；透明处贡献 1.0-0.0=1.0（遮蔽）
-            # pad 模式补边区在本函数中为 1.0（被遮蔽），为兼容历史实现有意保留
 
-        elif str(original_image.mode).strip() == 'P' and 'transparency' in original_image.info:
-             # Handle palette transparency
-             rgba_img = original_image.convert('RGBA')
-             alpha_channel = np.array(rgba_img.getchannel('A')).astype(np.float32) / 255.0
-             alpha_img = Image.fromarray((alpha_channel * 255).astype(np.uint8))
-             alpha_img = alpha_img.resize(processed_img.size, Image.Resampling.BICUBIC)
-             alpha_resized = np.array(alpha_img).astype(np.float32) / 255.0
-             mask_np = np.minimum(mask_np, 1.0 - alpha_resized)
+        # 遮罩语义（ComfyUI MASK：1.0=被遮蔽，0.0=可见）：
+        # - pad 补边区 1.0；crop/fill/contain/none 图像内容区 0.0
+        # - 源图 alpha 透明处 1.0（由缩放函数按几何对齐融入）
 
         # 转为 ComfyUI 张量格式：图像 [B, H, W, C]，遮罩 [B, H, W]
         img_tensor = torch.from_numpy(img_np)[None,]
